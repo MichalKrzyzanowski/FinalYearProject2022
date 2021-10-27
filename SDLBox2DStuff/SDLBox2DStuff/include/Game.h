@@ -47,7 +47,7 @@ private:
     b2PolygonShape m_dynamicBox;
     b2FixtureDef m_boxFix;
 
-    SDL_FRect m_groundRect;
+    //SDL_FRect m_groundRect;
     SDL_FRect m_boxRect;
 
     float m_timeStep{ 1.0f / 60.0f };
@@ -55,4 +55,5 @@ private:
     int32_t m_positionIterations{ 2 };
 
     Rect m_rect;
+    Rect m_groundRect;
 };

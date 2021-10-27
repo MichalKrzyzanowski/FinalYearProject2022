@@ -2,12 +2,13 @@
 
 Game::Game() :
 	m_gameIsRunning{ false },
-	m_rect{ Vector2f{10.0f, 50.0f} , 50.0f, 50.0f }
+	m_rect{ Vector2f{10.0f, 50.0f} , 50.0f, 50.0f },
+	m_groundRect{ Vector2f{10.0f, 200.0f}, 300.0f, 100.0f }
 {
-	m_groundRect.w = 300.0f;
+	/*m_groundRect.w = 300.0f;
 	m_groundRect.h = 100.0f;
 	m_groundRect.x = 10.0f;
-	m_groundRect.y = 200.0f;
+	m_groundRect.y = 200.0f;*/
 
 	m_boxRect.w = 10.0f;
 	m_boxRect.h = 10.0f;
@@ -15,9 +16,9 @@ Game::Game() :
 	m_boxRect.y = 10.0f;
 
 	// box2d setup
-	m_groundBodDef.position.Set(m_groundRect.x / m_SCALING_FACTOR, m_groundRect.y / m_SCALING_FACTOR);
+	m_groundBodDef.position.Set(m_groundRect.position().x / m_SCALING_FACTOR, m_groundRect.position().y / m_SCALING_FACTOR);
 	m_groundBody = m_world.CreateBody(&m_groundBodDef);
-	m_groundBox.SetAsBox(480.0f / 2.0f / m_SCALING_FACTOR, m_groundRect.h / 2.0f / m_SCALING_FACTOR);
+	m_groundBox.SetAsBox(m_groundRect.width() / 2.0f / m_SCALING_FACTOR, m_groundRect.height() / 2.0f / m_SCALING_FACTOR);
 	m_groundBody->CreateFixture(&m_groundBox, 0.0f);
 
 	m_DynamicBodDef.type = b2_dynamicBody;
@@ -111,10 +112,32 @@ void Game::render()
 	SDL_RenderClear(m_renderer);
 
 	SDL_SetRenderDrawColor(m_renderer, 0x00, 0x00, 0x00, 0xFF);
-	SDL_RenderDrawRectF(m_renderer, &m_groundRect);
+	//SDL_RenderDrawRectF(m_renderer, &m_groundRect);
 	//SDL_RenderDrawRectF(m_renderer, &m_boxRect);
 
-	m_rect.render(m_renderer);
+	//m_rect.render(m_renderer);
+	//m_groundRect.render(m_renderer);
+
+	SDL_FPoint points[4];
+	SDL_FPoint pointsG[4];
+
+	//SDL_SetRenderDrawColor(m_renderer, 155, 0, 0, SDL_ALPHA_OPAQUE);
+	for (int i{}; i < 4; ++i)
+	{
+		points[i].x = (m_dynamicBoxBody->GetPosition().x + m_dynamicBox.m_vertices[i % m_dynamicBox.m_count].x) * m_SCALING_FACTOR;
+		points[i].y = (m_dynamicBoxBody->GetPosition().y + m_dynamicBox.m_vertices[i % m_dynamicBox.m_count].y) * m_SCALING_FACTOR;
+	}
+
+	for (int i{}; i < 4; ++i)
+	{
+		pointsG[i].x = (m_groundBody->GetPosition().x + m_groundBox.m_vertices[i % m_groundBox.m_count].x) * m_SCALING_FACTOR;
+		pointsG[i].y = (m_groundBody->GetPosition().y + m_groundBox.m_vertices[i % m_groundBox.m_count].y) * m_SCALING_FACTOR;
+	}
+
+	SDL_RenderDrawPointsF(m_renderer, points, 4);
+	SDL_RenderDrawLinesF(m_renderer, points, 4);
+	SDL_RenderDrawPointsF(m_renderer, pointsG, 4);
+	SDL_RenderDrawLinesF(m_renderer, pointsG, 4);
 
 
 	SDL_RenderPresent(m_renderer);
