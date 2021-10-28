@@ -153,11 +153,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ConvexShape.cpp" />
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConvexShape.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Utility.h" />

@@ -3,6 +3,7 @@
 #include <string>
 #include <box2d.h>
 #include "Rect.h"
+#include "ConvexShape.h"
 #include "Utility.h"
 
 #define SCREEN_WIDTH 640
@@ -54,6 +55,7 @@ private:
     int32_t m_velocityIterations{ 6 };
     int32_t m_positionIterations{ 2 };
 
+    SDL_FPoint pointsG[4];
     Rect m_rect;
     Rect m_groundRect;
 };
