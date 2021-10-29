@@ -2,11 +2,7 @@
 #define RECT_H
 
 #include <SDL.h>
-
-struct Vector2f
-{
-	float x, y;
-};
+#include "Utility.h"
 
 class Rect
 {

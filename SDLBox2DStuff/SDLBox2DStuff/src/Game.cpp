@@ -3,7 +3,8 @@
 Game::Game() :
 	m_gameIsRunning{ false },
 	m_rect{ Vector2f{10.0f, 50.0f} , 50.0f, 50.0f },
-	m_groundRect{ Vector2f{10.0f, 200.0f}, 300.0f, 100.0f }
+	m_groundRect{ Vector2f{10.0f, 200.0f}, 300.0f, 100.0f },
+	m_testShape{ &m_world, Vector2f{0, 200}, 400, 100, b2_dynamicBody }
 {
 	/*m_groundRect.w = 300.0f;
 	m_groundRect.h = 100.0f;
@@ -30,9 +31,9 @@ Game::Game() :
 	float cx = pointsG[0].x + 400.0f / 2.0f;
 	float cy = pointsG[0].y + 100.0f / 2.0f;
 
-	m_groundBodDef.position.Set(cx / m_SCALING_FACTOR, cy / m_SCALING_FACTOR);
+	m_groundBodDef.position.Set(cx / SCALING_FACTOR, cy / SCALING_FACTOR);
 	m_groundBody = m_world.CreateBody(&m_groundBodDef);
-	m_groundBox.SetAsBox(400.0f / 2.0f / m_SCALING_FACTOR, 100.0f / 2.0f / m_SCALING_FACTOR);
+	m_groundBox.SetAsBox(400.0f / 2.0f / SCALING_FACTOR, 100.0f / 2.0f / SCALING_FACTOR);
 	m_groundBody->CreateFixture(&m_groundBox, 0.0f);
 
 	// box2d setup
@@ -42,9 +43,9 @@ Game::Game() :
 	m_groundBody->CreateFixture(&m_groundBox, 0.0f);*/
 
 	m_DynamicBodDef.type = b2_dynamicBody;
-	m_DynamicBodDef.position.Set(m_rect.position().x / m_SCALING_FACTOR, m_rect.position().y / m_SCALING_FACTOR);
+	m_DynamicBodDef.position.Set(m_rect.position().x / SCALING_FACTOR, m_rect.position().y / SCALING_FACTOR);
 	m_dynamicBoxBody = m_world.CreateBody(&m_DynamicBodDef);
-	m_dynamicBox.SetAsBox(m_rect.width() / 2.0f / m_SCALING_FACTOR, m_rect.height() / 2.0f / m_SCALING_FACTOR);
+	m_dynamicBox.SetAsBox(m_rect.width() / 2.0f / SCALING_FACTOR, m_rect.height() / 2.0f / SCALING_FACTOR);
 
 	m_boxFix.shape = &m_dynamicBox;
 	m_boxFix.density = 1.0f;
@@ -116,7 +117,7 @@ void Game::update()
 	b2Vec2 position = m_dynamicBoxBody->GetPosition();
 	float angle = m_dynamicBoxBody->GetAngularVelocity();
 
-	m_rect.setPosition(position.x * m_SCALING_FACTOR + m_rect.width() / 2.0, position.y * m_SCALING_FACTOR + m_rect.height() / 2.0);
+	m_rect.setPosition(position.x * SCALING_FACTOR + m_rect.width() / 2.0, position.y * SCALING_FACTOR + m_rect.height() / 2.0);
 	m_rect.rotate(Deg2Rad(angle));
 	//m_boxRect.x = position.x * m_SCALING_FACTOR + m_boxRect.w / 2.0;
 	//m_boxRect.y = position.y * m_SCALING_FACTOR + m_boxRect.h / 2.0;
@@ -143,8 +144,8 @@ void Game::render()
 	//SDL_SetRenderDrawColor(m_renderer, 155, 0, 0, SDL_ALPHA_OPAQUE);
 	for (int i{}; i < 4; ++i)
 	{
-		points[i].x = (m_dynamicBoxBody->GetPosition().x + m_dynamicBox.m_vertices[i % m_dynamicBox.m_count].x) * m_SCALING_FACTOR;
-		points[i].y = (m_dynamicBoxBody->GetPosition().y + m_dynamicBox.m_vertices[i % m_dynamicBox.m_count].y) * m_SCALING_FACTOR;
+		points[i].x = (m_dynamicBoxBody->GetPosition().x + m_dynamicBox.m_vertices[i % m_dynamicBox.m_count].x) * SCALING_FACTOR;
+		points[i].y = (m_dynamicBoxBody->GetPosition().y + m_dynamicBox.m_vertices[i % m_dynamicBox.m_count].y) * SCALING_FACTOR;
 	}
 
 	/*for (int i{}; i < 4; ++i)
@@ -157,6 +158,8 @@ void Game::render()
 	SDL_RenderDrawLinesF(m_renderer, points, 4);
 	SDL_RenderDrawPointsF(m_renderer, pointsG, 4);
 	SDL_RenderDrawLinesF(m_renderer, pointsG, 4);
+
+	m_testShape.render(m_renderer);
 
 
 	SDL_RenderPresent(m_renderer);

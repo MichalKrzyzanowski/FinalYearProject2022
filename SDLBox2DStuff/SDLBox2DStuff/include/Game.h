@@ -5,6 +5,7 @@
 #include "Rect.h"
 #include "ConvexShape.h"
 #include "Utility.h"
+#include "ConvexShape.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -27,8 +28,6 @@ private:
     void cleanUp();
 
     bool m_gameIsRunning;
-
-    const float m_SCALING_FACTOR{ 50.0f };
 
     SDL_Window* m_window;
     SDL_Renderer* m_renderer;
@@ -58,4 +57,6 @@ private:
     SDL_FPoint pointsG[4];
     Rect m_rect;
     Rect m_groundRect;
+
+    ConvexShape m_testShape;
 };

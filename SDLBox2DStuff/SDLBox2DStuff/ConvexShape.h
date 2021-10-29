@@ -2,14 +2,9 @@
 #define CONVEX_SHAPE_H
 
 #include <vector>
-#include <SDL_video.h>
+#include <SDL.h>
 #include <box2d.h>
-
-// temp for now
-struct Vector2f
-{
-	float x, y;
-};
+#include "Utility.h"
 
 class ConvexShape
 {
@@ -30,8 +25,13 @@ private:
 	b2FixtureDef m_b2FixtureDef;
 
 public:
-	ConvexShape(b2World* world);
+	// rect constructor
+	ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType type);
 	~ConvexShape();
+
+	void update();
+	void render(SDL_Renderer* renderer);
+	void renderLines(SDL_Renderer* renderer);
 };
 #endif // !CONVEX_SHAPE_H
 
