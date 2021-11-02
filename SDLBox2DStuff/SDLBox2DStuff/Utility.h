@@ -19,6 +19,18 @@ inline float Rad2Deg(float rad)
 {
 	return rad * (180.0f / PI);
 }
+inline void rotatePoint(float cx, float cy, float angle, SDL_FPoint& point)
+{
+	point.x -= cx;
+	point.y -= cy;
+
+	float newX = point.x * cosf(angle) - point.y * sinf(angle);
+	float newY = point.x * sinf(angle) + point.y * cosf(angle);
+
+	point.x = newX + cx;
+	point.y = newY + cy;
+}
+
 
 #endif // !UTILITY_H
 

@@ -13,7 +13,7 @@ private:
 	std::vector<SDL_FPoint> m_points;
 	SDL_Color m_color;
 
-	Vector2f m_position;
+	Vector2f m_center;
 	float m_width;
 	float m_height;
 
@@ -24,9 +24,13 @@ private:
 	b2PolygonShape m_b2Shape;
 	b2FixtureDef m_b2FixtureDef;
 
+private:
+	void setPosition(b2Vec2 position);
+	void rotate(float angularVelocity);
+
 public:
 	// rect constructor
-	ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType type);
+	ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType type, SDL_Color color = SDL_Color{ 0, 0, 0, 255 });
 	~ConvexShape();
 
 	void update();
