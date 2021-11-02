@@ -9,8 +9,7 @@
 class ConvexShape
 {
 private:
-
-	std::vector<SDL_FPoint> m_points;
+	std::vector<SDL_FPoint> m_points; // for rendering
 	SDL_Color m_color;
 
 	Vector2f m_center;
@@ -26,11 +25,16 @@ private:
 
 private:
 	void setPosition(b2Vec2 position);
-	void rotate(float angularVelocity);
+	void rotate(float radians);
 
 public:
 	// rect constructor
-	ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType type, SDL_Color color = SDL_Color{ 0, 0, 0, 255 });
+	ConvexShape(b2World* world,
+		Vector2f topLeftPosition,
+		float width,
+		float height,
+		b2BodyType type,
+		SDL_Color color = SDL_Color{ 0, 0, 0, 255 });
 	~ConvexShape();
 
 	void update();

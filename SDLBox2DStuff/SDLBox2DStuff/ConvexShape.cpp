@@ -16,7 +16,7 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 
 	// setup initial box2d shape
 	m_b2BodyDef.type = type;
-	m_b2BodyDef.position.Set((m_center.x + m_width / 2.0f) / SCALING_FACTOR, (m_center.y + m_height / 2.0f) / SCALING_FACTOR);
+	m_b2BodyDef.position.Set((topLeftPosition.x + m_width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_height / 2.0f) / SCALING_FACTOR);
 	m_b2Body = m_world->CreateBody(&m_b2BodyDef);
 	m_b2Shape.SetAsBox(m_width / 2.0f / SCALING_FACTOR, m_height / 2.0f / SCALING_FACTOR);
 
@@ -41,6 +41,7 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 
 ConvexShape::~ConvexShape()
 {
+	printf("~ConvexShape()\n");
 	m_world->DestroyBody(m_b2Body);
 }
 
@@ -49,8 +50,7 @@ void ConvexShape::update()
 	if (m_b2BodyDef.type != b2_staticBody)
 	{
 		setPosition(m_b2Body->GetPosition());
-		//printf("%4.2f %4.2f\n", m_b2Body->GetPosition().x, m_b2Body->GetPosition().y);
-		rotate(Deg2Rad(m_b2Body->GetAngularVelocity()));
+		rotate(Rad2Deg(m_b2Body->GetAngle() / SCALING_FACTOR));
 	}
 }
 
@@ -63,11 +63,13 @@ void ConvexShape::setPosition(b2Vec2 position)
 	}
 }
 
-void ConvexShape::rotate(float angularVelocity)
+void ConvexShape::rotate(float radians)
 {
 	for (SDL_FPoint& point : m_points)
 	{
-		rotatePoint(m_b2Body->GetWorldCenter().x, m_b2Body->GetWorldCenter().y, angularVelocity, point);
+		rotatePoint(m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
+			m_b2Body->GetWorldCenter().y * SCALING_FACTOR,
+			radians, point);
 	}
 }
 
@@ -88,4 +90,9 @@ void ConvexShape::renderLines(SDL_Renderer* renderer)
 		m_points.data()[m_points.size() - 1].y,
 		m_points.data()[0].x,
 		m_points.data()[0].y);
+
+	// draw the center of mass
+	SDL_RenderDrawPointF(renderer,
+		m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
+		m_b2Body->GetWorldCenter().y * SCALING_FACTOR);
 }

@@ -157,10 +157,12 @@
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConvexShape.h" />
     <ClInclude Include="include\Game.h" />
+    <ClInclude Include="include\Timer.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Utility.h" />
   </ItemGroup>
