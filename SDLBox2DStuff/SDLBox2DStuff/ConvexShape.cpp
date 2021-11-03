@@ -22,7 +22,7 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 
 
 	if (m_b2BodyDef.type != b2_staticBody)
-	{	
+	{
 		// temp dynamic fixture
 		m_b2FixtureDef.shape = &m_b2Shape;
 		m_b2FixtureDef.density = 1.0f;

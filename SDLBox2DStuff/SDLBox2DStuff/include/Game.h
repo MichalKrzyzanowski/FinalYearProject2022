@@ -7,6 +7,7 @@
 #include "Utility.h"
 #include "ConvexShape.h"
 #include "Timer.h"
+#include "Circle.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -41,6 +42,8 @@ private:
     int32_t m_positionIterations{ 2 };
 
     ConvexShape m_groundConvexShape;
+
+    Circle m_circle;
     
     // messing around with box2d
     int x, y;

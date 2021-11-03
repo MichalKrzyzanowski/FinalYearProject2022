@@ -8,7 +8,7 @@ struct Vector2f
 
 #define PI 3.14159265358979323846
 
-const float SCALING_FACTOR{ 50.0f };
+const float SCALING_FACTOR{ 100.0f };
 
 inline float Deg2Rad(float deg)
 {

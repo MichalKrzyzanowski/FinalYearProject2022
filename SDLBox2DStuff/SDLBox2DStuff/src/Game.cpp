@@ -2,8 +2,8 @@
 
 Game::Game() :
 	m_gameIsRunning{ false },
-	m_groundConvexShape{ &m_world, Vector2f{0, SCREEN_HEIGHT}, SCREEN_WIDTH, 100, b2_staticBody }
-	//m_dynamicConvexShape{ &m_world, Vector2f{10, 50}, 50, 50, b2_dynamicBody }
+	m_groundConvexShape{ &m_world, Vector2f{0, SCREEN_HEIGHT}, SCREEN_WIDTH, 100, b2_staticBody },
+	m_circle{ Vector2f{100, 100}, 50 }
 {
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -100,7 +100,7 @@ void Game::render()
 		shape.render(m_renderer);
 	}
 	m_groundConvexShape.render(m_renderer);
-
+	m_circle.render(m_renderer);
 
 	SDL_RenderPresent(m_renderer);
 }
