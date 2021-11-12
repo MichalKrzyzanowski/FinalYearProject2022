@@ -52,6 +52,11 @@ void Game::processEvents(SDL_Event e)
 			m_gameIsRunning = false;
 		}
 
+		if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE)
+		{
+			m_playSim = !m_playSim;
+		}
+
 		processMouseEvents(e);
 	}
 
@@ -64,6 +69,7 @@ void Game::processMouseEvents(SDL_Event e)
 	// if the left mouse button is pressed down
 	if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 	{
+		m_shapeSpawner.emplace_back(&m_world, Vector2f{ static_cast<float>(x), static_cast<float>(y) }, 20, 20, b2_dynamicBody);
 		m_sprayTime = true;
 		printf("x:%d y:%d\n", x, y);
 	}
@@ -75,17 +81,20 @@ void Game::processMouseEvents(SDL_Event e)
 
 void Game::update()
 {
-	m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
-
-	if (m_sprayTime && m_timer.getTicksAsSeconds() > m_sprayCooldown)
+	if (m_playSim)
 	{
-		m_shapeSpawner.emplace_back(&m_world, Vector2f{ static_cast<float>(x), static_cast<float>(y) }, 20, 20, b2_dynamicBody);
-		m_timer.restart();
-	}
+		m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
 
-	for (ConvexShape& shape : m_shapeSpawner)
-	{
-		shape.update();
+		if (m_sprayTime && m_timer.getTicksAsSeconds() > m_sprayCooldown)
+		{
+			/*m_shapeSpawner.emplace_back(&m_world, Vector2f{ static_cast<float>(x), static_cast<float>(y) }, 20, 20, b2_dynamicBody);*/
+			m_timer.restart();
+		}
+
+		for (ConvexShape& shape : m_shapeSpawner)
+		{
+			shape.update();
+		}
 	}
 }
 

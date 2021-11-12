@@ -45,6 +45,8 @@ private:
 
     Circle m_circle;
     
+    bool m_playSim{ false };
+
     // messing around with box2d
     int x, y;
     bool m_sprayTime{ false };
