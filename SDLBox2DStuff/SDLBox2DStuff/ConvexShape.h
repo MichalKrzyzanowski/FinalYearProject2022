@@ -40,6 +40,9 @@ public:
 	void update();
 	void render(SDL_Renderer* renderer);
 	void renderLines(SDL_Renderer* renderer);
+
+	int width() { return m_width; }
+	int height() { return m_height; }
 };
 #endif // !CONVEX_SHAPE_H
 
