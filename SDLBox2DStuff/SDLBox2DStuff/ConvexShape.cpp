@@ -1,12 +1,13 @@
 #include "ConvexShape.h"
 
 
-ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType type, SDL_Color color) :
+ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType b2Type, SDL_Color color, Type type) :
 	m_world{ world },
 	m_width{ width },
 	m_height{ height },
 	m_center{ topLeftPosition.x + m_width / 2.0f, topLeftPosition.y + m_height / 2.0f }, // temporary center
-	m_color{ color }
+	m_color{ color },
+	m_type{ type }
 {
 	// setup rect points
 	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y });
@@ -15,7 +16,7 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y + m_height });
 
 	// setup initial box2d shape
-	m_b2BodyDef.type = type;
+	m_b2BodyDef.type = b2Type;
 	m_b2BodyDef.position.Set((topLeftPosition.x + m_width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_height / 2.0f) / SCALING_FACTOR);
 	m_b2Body = m_world->CreateBody(&m_b2BodyDef);
 	m_b2Shape.SetAsBox(m_width / 2.0f / SCALING_FACTOR, m_height / 2.0f / SCALING_FACTOR);
@@ -75,7 +76,11 @@ void ConvexShape::rotate(float radians)
 
 void ConvexShape::render(SDL_Renderer* renderer)
 {
-	SDL_SetRenderDrawColor(renderer, m_color.r, m_color.g, m_color.b, m_color.a);
+	int i = color().r;
+	int j = color().r;
+	int k = color().r;
+
+	SDL_SetRenderDrawColor(renderer, color().r, color().g, color().b, color().a);
 
 	renderLines(renderer);
 }

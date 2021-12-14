@@ -9,6 +9,8 @@
 #include "Timer.h"
 #include "Circle.h"
 #include "Button.h"
+#include "Target.h"
+#include "Player.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -57,6 +59,8 @@ private:
 
 	ConvexShape m_rectanglePrefab;
 	ConvexShape m_squarePrefab;
+	Target m_targetPrefab;
+	Player m_playerPrefab;
 
 	ConvexShape* m_currentShape{};
 
@@ -64,6 +68,8 @@ private:
 	SDL_FRect m_toolbarBg{ 0.0f, SCREEN_HEIGHT - 70.0f, SCREEN_WIDTH, 70.0f };
 	UI::Button m_squareButton{ Vector2f{m_toolbarBg.x + 20.0f, m_toolbarBg.y + 10.0f} };
 	UI::Button m_rectButton{ Vector2f{m_toolbarBg.x + 100.0f, m_toolbarBg.y + 10.0f} };
+	UI::Button m_targetButton{ Vector2f{m_toolbarBg.x + 180.0f, m_toolbarBg.y + 10.0f} };
+	UI::Button m_playerButton{ Vector2f{m_toolbarBg.x + 260.0f, m_toolbarBg.y + 10.0f} };
 
 	SDL_FRect m_rectangleShapeSelect{ m_rectButton.position().x + 15.0f,
 										m_rectButton.position().y + 10.0f,
@@ -71,5 +77,13 @@ private:
 
 	SDL_FRect m_squareShapeSelect{ m_squareButton.position().x + 15.0f,
 									m_squareButton.position().y + 15.0f,
+										10, 10 };
+
+	SDL_FRect m_targetSelect{ m_targetButton.position().x + 15.0f,
+									m_targetButton.position().y + 15.0f,
+										10, 10 };
+	
+	SDL_FRect m_playerSelect{ m_playerButton.position().x + 15.0f,
+									m_playerButton.position().y + 15.0f,
 										10, 10 };
 };

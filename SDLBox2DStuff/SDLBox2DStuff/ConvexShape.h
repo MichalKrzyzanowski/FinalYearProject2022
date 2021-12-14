@@ -6,6 +6,13 @@
 #include <box2d.h>
 #include "Utility.h"
 
+enum class Type
+{
+	BLOCK,
+	PLAYER,
+	TARGET
+};
+
 class ConvexShape
 {
 private:
@@ -15,6 +22,8 @@ private:
 	Vector2f m_center;
 	float m_width;
 	float m_height;
+
+	Type m_type;
 
 	b2World* m_world;
 
@@ -33,8 +42,9 @@ public:
 		Vector2f topLeftPosition,
 		float width,
 		float height,
-		b2BodyType type,
-		SDL_Color color = SDL_Color{ 0, 0, 0, 255 });
+		b2BodyType b2Type,
+		SDL_Color color = SDL_Color{ 0, 0, 0, 255 },
+		Type type = Type::BLOCK);
 	~ConvexShape();
 
 	void update();
@@ -43,6 +53,10 @@ public:
 
 	int width() { return m_width; }
 	int height() { return m_height; }
+	b2BodyType b2Body() { return m_b2BodyDef.type; }
+
+	Type& type() { return m_type; }
+	SDL_Color& color() { return m_color; }
 };
 #endif // !CONVEX_SHAPE_H
 
