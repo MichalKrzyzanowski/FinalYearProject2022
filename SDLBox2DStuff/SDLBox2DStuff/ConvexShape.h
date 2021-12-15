@@ -20,6 +20,7 @@ private:
 	SDL_Color m_color;
 
 	Vector2f m_center;
+	Vector2f m_staticPosition;
 	float m_width;
 	float m_height;
 
@@ -50,10 +51,14 @@ public:
 	void update();
 	void render(SDL_Renderer* renderer);
 	void renderLines(SDL_Renderer* renderer);
+	void launch(b2Vec2 direction, float power);
 
 	int width() { return m_width; }
 	int height() { return m_height; }
 	b2BodyType b2Body() { return m_b2BodyDef.type; }
+
+	b2Vec2 position() { return m_b2Body->GetPosition(); }
+	Vector2f staticPosition() { return m_staticPosition; }
 
 	Type& type() { return m_type; }
 	SDL_Color& color() { return m_color; }

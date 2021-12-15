@@ -63,6 +63,8 @@ private:
 	Player m_playerPrefab;
 
 	ConvexShape* m_currentShape{};
+	ConvexShape* m_player{};
+	bool m_playerPresent{ false };
 
 	// UI
 	SDL_FRect m_toolbarBg{ 0.0f, SCREEN_HEIGHT - 70.0f, SCREEN_WIDTH, 70.0f };

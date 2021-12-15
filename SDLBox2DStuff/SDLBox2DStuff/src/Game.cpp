@@ -86,6 +86,12 @@ void Game::processMouseEvents(SDL_Event e)
 				m_currentShape->color(),
 				m_currentShape->type());
 
+			if (m_currentShape->type() == Type::PLAYER && !m_playerPresent)
+			{
+				m_player = &m_shapeSpawner.back();
+				m_playerPresent = true;
+			}
+
 			//m_sprayTime = true;
 			printf("r:%d g:%d b:%d\n", m_currentShape->color().r, m_currentShape->color().g, m_currentShape->color().b);
 		}
@@ -119,12 +125,29 @@ void Game::processMouseEvents(SDL_Event e)
 		else if ((x >= m_playerButton.position().x && x <= m_playerButton.position().x + m_playerButton.width()) &&
 			(y >= m_playerButton.position().y && y <= m_playerButton.position().y + m_playerButton.height()))
 		{
-			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
+			if (!m_playerPresent)
 			{
-				m_currentShape = &m_playerPrefab;
+				if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
+				{
+					m_currentShape = &m_playerPrefab;
+				}
 			}
 		}
 	}
+
+	if (m_playSim)
+	{
+		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
+		{
+			b2Vec2 unit{ static_cast<float>(x) - m_player->position().x * SCALING_FACTOR, static_cast<float>(y) - m_player->position().y * SCALING_FACTOR };
+			printf("%f, %f\n", unit.x, unit.y);
+			unit.Normalize();
+			printf("%f, %f\n", unit.x, unit.y);
+			m_shapeSpawner.emplace_back(&m_world, Vector2f{ (m_player->position().x * SCALING_FACTOR + 20.0f), (m_player->position().y * SCALING_FACTOR) + 20.0f }, 15, 15, b2_dynamicBody);
+			m_shapeSpawner.back().launch(unit, 500.0f);
+		}
+	}
+
 	/*else if(e.type == SDL_MOUSEBUTTONUP)
 	{
 		m_sprayTime = false;

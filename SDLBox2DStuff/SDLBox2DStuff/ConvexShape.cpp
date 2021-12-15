@@ -15,6 +15,8 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_points.push_back(SDL_FPoint{ topLeftPosition.x + m_width, topLeftPosition.y + m_height });
 	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y + m_height });
 
+	m_staticPosition = topLeftPosition;
+
 	// setup initial box2d shape
 	m_b2BodyDef.type = b2Type;
 	m_b2BodyDef.position.Set((topLeftPosition.x + m_width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_height / 2.0f) / SCALING_FACTOR);
@@ -100,4 +102,9 @@ void ConvexShape::renderLines(SDL_Renderer* renderer)
 	SDL_RenderDrawPointF(renderer,
 		m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
 		m_b2Body->GetWorldCenter().y * SCALING_FACTOR);
+}
+
+void ConvexShape::launch(b2Vec2 direction, float power)
+{
+	m_b2Body->ApplyForceToCenter(b2Vec2{ direction.x * m_b2Body->GetMass() * power, direction.y * m_b2Body->GetMass() * power }, true);
 }
