@@ -73,6 +73,8 @@ private:
 	UI::Button m_targetButton{ Vector2f{m_toolbarBg.x + 180.0f, m_toolbarBg.y + 10.0f} };
 	UI::Button m_playerButton{ Vector2f{m_toolbarBg.x + 260.0f, m_toolbarBg.y + 10.0f} };
 
+	UI::Button* m_selectedButton{ nullptr };
+
 	SDL_FRect m_rectangleShapeSelect{ m_rectButton.position().x + 15.0f,
 										m_rectButton.position().y + 10.0f,
 										10, 20 };

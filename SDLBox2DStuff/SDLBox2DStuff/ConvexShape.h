@@ -50,7 +50,9 @@ public:
 
 	void update();
 	void render(SDL_Renderer* renderer);
+	void renderShadow(SDL_Renderer* renderer, Vector2f position);
 	void renderLines(SDL_Renderer* renderer);
+	void renderLines(SDL_Renderer* renderer, std::vector<SDL_FPoint>* points);
 	void launch(b2Vec2 direction, float power);
 
 	int width() { return m_width; }

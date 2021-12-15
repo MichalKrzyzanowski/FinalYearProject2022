@@ -2,7 +2,7 @@
 
 Game::Game() :
 	m_gameIsRunning{ false },
-	m_groundConvexShape{ &m_world, Vector2f{0, SCREEN_HEIGHT}, SCREEN_WIDTH, 100, b2_staticBody },
+	m_groundConvexShape{ &m_world, Vector2f{0, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH, 100, b2_staticBody },
 	m_rectanglePrefab{ &m_world, Vector2f{0, 0}, 20, 50, b2_dynamicBody },
 	m_squarePrefab{ &m_world, Vector2f{0, 0}, 20, 20, b2_dynamicBody },
 	m_targetPrefab{ &m_world, Vector2f{0, 0}, },
@@ -21,6 +21,7 @@ Game::Game() :
 
 	m_shapeSpawner.reserve(10000); // reserve some space for ALOT of squares
 	m_currentShape = &m_rectanglePrefab;
+	m_selectedButton = &m_rectButton;
 }
 
 Game::~Game()
@@ -78,18 +79,28 @@ void Game::processMouseEvents(SDL_Event e)
 		// if the left mouse button is pressed down
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 		{
-			m_shapeSpawner.emplace_back(&m_world,
-				Vector2f{ static_cast<float>(x), static_cast<float>(y) },
-				m_currentShape->width(),
-				m_currentShape->height(),
-				m_currentShape->b2Body(),
-				m_currentShape->color(),
-				m_currentShape->type());
-
 			if (m_currentShape->type() == Type::PLAYER && !m_playerPresent)
 			{
+				m_shapeSpawner.emplace_back(&m_world,
+					Vector2f{ static_cast<float>(x), static_cast<float>(y) },
+					m_currentShape->width(),
+					m_currentShape->height(),
+					m_currentShape->b2Body(),
+					m_currentShape->color(),
+					m_currentShape->type());
+
 				m_player = &m_shapeSpawner.back();
 				m_playerPresent = true;
+			}
+			else if (m_currentShape->type() != Type::PLAYER)
+			{
+				m_shapeSpawner.emplace_back(&m_world,
+					Vector2f{ static_cast<float>(x), static_cast<float>(y) },
+					m_currentShape->width(),
+					m_currentShape->height(),
+					m_currentShape->b2Body(),
+					m_currentShape->color(),
+					m_currentShape->type());
 			}
 
 			//m_sprayTime = true;
@@ -104,6 +115,7 @@ void Game::processMouseEvents(SDL_Event e)
 			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
 				m_currentShape = &m_squarePrefab;
+				m_selectedButton = &m_squareButton;
 			}
 		}
 		else if ((x >= m_rectButton.position().x && x <= m_rectButton.position().x + m_rectButton.width()) &&
@@ -112,6 +124,7 @@ void Game::processMouseEvents(SDL_Event e)
 			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
 				m_currentShape = &m_rectanglePrefab;
+				m_selectedButton = &m_rectButton;
 			}
 		}
 		else if ((x >= m_targetButton.position().x && x <= m_targetButton.position().x + m_targetButton.width()) &&
@@ -120,30 +133,28 @@ void Game::processMouseEvents(SDL_Event e)
 			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
 				m_currentShape = &m_targetPrefab;
+				m_selectedButton = &m_targetButton;
 			}
 		}
 		else if ((x >= m_playerButton.position().x && x <= m_playerButton.position().x + m_playerButton.width()) &&
 			(y >= m_playerButton.position().y && y <= m_playerButton.position().y + m_playerButton.height()))
 		{
-			if (!m_playerPresent)
+			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
-				if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
-				{
-					m_currentShape = &m_playerPrefab;
-				}
+				m_currentShape = &m_playerPrefab;
+				m_selectedButton = &m_playerButton;
 			}
 		}
 	}
 
-	if (m_playSim)
+	if (m_playSim && m_player)
 	{
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 		{
 			b2Vec2 unit{ static_cast<float>(x) - m_player->position().x * SCALING_FACTOR, static_cast<float>(y) - m_player->position().y * SCALING_FACTOR };
-			printf("%f, %f\n", unit.x, unit.y);
 			unit.Normalize();
-			printf("%f, %f\n", unit.x, unit.y);
-			m_shapeSpawner.emplace_back(&m_world, Vector2f{ (m_player->position().x * SCALING_FACTOR + 20.0f), (m_player->position().y * SCALING_FACTOR) + 20.0f }, 15, 15, b2_dynamicBody);
+			m_shapeSpawner.emplace_back(&m_world, Vector2f{ (m_player->position().x + unit.x / 4) * SCALING_FACTOR,
+				(m_player->position().y + unit.y / 4) * SCALING_FACTOR }, 15, 15, b2_dynamicBody);
 			m_shapeSpawner.back().launch(unit, 500.0f);
 		}
 	}
@@ -188,6 +199,11 @@ void Game::render()
 
 	if (!m_playSim)
 	{
+		if (y < m_toolbarBg.y && m_currentShape)
+		{
+			m_currentShape->renderShadow(m_renderer, Vector2f{ static_cast<float>(x), static_cast<float>(y) });
+		}
+
 		SDL_SetRenderDrawColor(m_renderer, 128, 128, 128, 128);
 		SDL_RenderFillRectF(m_renderer, &m_toolbarBg);
 
@@ -199,11 +215,17 @@ void Game::render()
 
 		SDL_RenderFillRectF(m_renderer, &m_squareShapeSelect);
 		SDL_RenderFillRectF(m_renderer, &m_rectangleShapeSelect);
-		SDL_RenderFillRectF(m_renderer, &m_playerSelect);
 
+		if (m_selectedButton)
+		{
+			SDL_SetRenderDrawColor(m_renderer, 0xD2, 0x21, 0x21, 0xFF);
+			m_selectedButton->render(m_renderer);
+		}
 
 		SDL_SetRenderDrawColor(m_renderer, 240, 207, 46, 255);
 		SDL_RenderFillRectF(m_renderer, &m_targetSelect);
+		SDL_SetRenderDrawColor(m_renderer, 0x24, 0x3C, 0xAE, 0xFF);
+		SDL_RenderFillRectF(m_renderer, &m_playerSelect);
 	}
 
 	SDL_RenderPresent(m_renderer);

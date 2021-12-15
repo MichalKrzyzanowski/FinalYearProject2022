@@ -78,13 +78,22 @@ void ConvexShape::rotate(float radians)
 
 void ConvexShape::render(SDL_Renderer* renderer)
 {
-	int i = color().r;
-	int j = color().r;
-	int k = color().r;
-
 	SDL_SetRenderDrawColor(renderer, color().r, color().g, color().b, color().a);
 
 	renderLines(renderer);
+}
+
+void ConvexShape::renderShadow(SDL_Renderer* renderer, Vector2f position)
+{
+	SDL_SetRenderDrawColor(renderer, color().r, color().g, color().b, 128);
+
+	std::vector<SDL_FPoint> points{};
+	points.push_back(SDL_FPoint{ position.x, position.y });
+	points.push_back(SDL_FPoint{ position.x + m_width, position.y });
+	points.push_back(SDL_FPoint{ position.x + m_width, position.y + m_height });
+	points.push_back(SDL_FPoint{ position.x, position.y + m_height });
+
+	renderLines(renderer, &points);
 }
 
 void ConvexShape::renderLines(SDL_Renderer* renderer)
@@ -97,6 +106,23 @@ void ConvexShape::renderLines(SDL_Renderer* renderer)
 		m_points.data()[m_points.size() - 1].y,
 		m_points.data()[0].x,
 		m_points.data()[0].y);
+
+	// draw the center of mass
+	SDL_RenderDrawPointF(renderer,
+		m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
+		m_b2Body->GetWorldCenter().y * SCALING_FACTOR);
+}
+
+void ConvexShape::renderLines(SDL_Renderer* renderer, std::vector<SDL_FPoint>* points)
+{
+	SDL_RenderDrawLinesF(renderer, points->data(), points->size());
+
+	// draw a line from the last point to the first point
+	SDL_RenderDrawLineF(renderer,
+		points->data()[points->size() - 1].x,
+		points->data()[points->size() - 1].y,
+		points->data()[0].x,
+		points->data()[0].y);
 
 	// draw the center of mass
 	SDL_RenderDrawPointF(renderer,
