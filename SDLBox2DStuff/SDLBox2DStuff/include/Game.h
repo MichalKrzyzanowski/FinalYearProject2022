@@ -29,7 +29,11 @@ private:
 	void update();
 	void render();
 
+	void storeShapeData(ConvexShape* shape);
+	void reset();
+	void estimateDifficulty();
 	void cleanUp();
+	void shoot(Vector2f targetPosition);
 
 	bool m_gameIsRunning;
 
@@ -49,6 +53,7 @@ private:
 	Circle m_circle;
 
 	bool m_playSim{ false };
+	bool m_targetPresent{ false };
 
 	// messing around with box2d
 	int x, y;
@@ -56,6 +61,9 @@ private:
 	Timer m_timer{};
 	float m_sprayCooldown{ 0.05f };
 	std::vector<ConvexShape> m_shapeSpawner{};
+	std::vector<ShapeData> m_shapeData{};
+	ConvexShape* m_currentBullet{ nullptr };
+
 
 	ConvexShape m_rectanglePrefab;
 	ConvexShape m_squarePrefab;

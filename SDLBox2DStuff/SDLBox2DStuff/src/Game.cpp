@@ -62,6 +62,22 @@ void Game::processEvents(SDL_Event e)
 		if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE)
 		{
 			m_playSim = !m_playSim;
+
+			if (!m_playSim)
+			{
+				reset();
+			}
+		}
+
+		if (!m_playSim)
+		{
+			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_g)
+			{
+				if (m_targetPresent && m_player)
+				{
+					estimateDifficulty();
+				}
+			}
 		}
 
 		processMouseEvents(e);
@@ -89,6 +105,8 @@ void Game::processMouseEvents(SDL_Event e)
 					m_currentShape->color(),
 					m_currentShape->type());
 
+				storeShapeData(&m_shapeSpawner.back());
+
 				m_player = &m_shapeSpawner.back();
 				m_playerPresent = true;
 			}
@@ -101,10 +119,14 @@ void Game::processMouseEvents(SDL_Event e)
 					m_currentShape->b2Body(),
 					m_currentShape->color(),
 					m_currentShape->type());
-			}
 
-			//m_sprayTime = true;
-			printf("r:%d g:%d b:%d\n", m_currentShape->color().r, m_currentShape->color().g, m_currentShape->color().b);
+				storeShapeData(&m_shapeSpawner.back());
+
+				if (m_currentShape->type() == Type::TARGET)
+				{
+					m_targetPresent = true;
+				}
+			}
 		}
 	}
 	else if (!m_playSim && y > m_toolbarBg.y)
@@ -151,18 +173,9 @@ void Game::processMouseEvents(SDL_Event e)
 	{
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 		{
-			b2Vec2 unit{ static_cast<float>(x) - m_player->position().x * SCALING_FACTOR, static_cast<float>(y) - m_player->position().y * SCALING_FACTOR };
-			unit.Normalize();
-			m_shapeSpawner.emplace_back(&m_world, Vector2f{ (m_player->position().x + unit.x / 4) * SCALING_FACTOR,
-				(m_player->position().y + unit.y / 4) * SCALING_FACTOR }, 15, 15, b2_dynamicBody);
-			m_shapeSpawner.back().launch(unit, 500.0f);
+			shoot(Vector2f{ static_cast<float>(x), static_cast<float>(y) });
 		}
 	}
-
-	/*else if(e.type == SDL_MOUSEBUTTONUP)
-	{
-		m_sprayTime = false;
-	}*/
 }
 
 void Game::update()
@@ -170,12 +183,6 @@ void Game::update()
 	if (m_playSim)
 	{
 		m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
-
-		//if (m_sprayTime && m_timer.getTicksAsSeconds() > m_sprayCooldown)
-		//{
-		//	/*m_shapeSpawner.emplace_back(&m_world, Vector2f{ static_cast<float>(x), static_cast<float>(y) }, 20, 20, b2_dynamicBody);*/
-		//	m_timer.restart();
-		//}
 
 		for (ConvexShape& shape : m_shapeSpawner)
 		{
@@ -189,7 +196,6 @@ void Game::render()
 	SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderClear(m_renderer);
 
-	//m_dynamicConvexShape.render(m_renderer);
 	for (ConvexShape& shape : m_shapeSpawner)
 	{
 		shape.render(m_renderer);
@@ -231,6 +237,89 @@ void Game::render()
 	SDL_RenderPresent(m_renderer);
 }
 
+void Game::storeShapeData(ConvexShape* shape)
+{
+	m_shapeData.push_back(ShapeData
+		{
+			shape->color(),
+			shape->staticPosition(),
+			shape->type(),
+			shape->b2Body(),
+			shape->width(),
+			shape->height()
+		});
+}
+
+void Game::reset()
+{
+	m_shapeSpawner.clear();
+	m_playerPresent = false;
+	m_targetPresent = false;
+	m_player = nullptr;
+
+	for (ShapeData& data : m_shapeData)
+	{
+		m_shapeSpawner.emplace_back(&m_world,
+			Vector2f{ data.position },
+			data.width,
+			data.height,
+			data.b2BodyType,
+			data.color,
+			data.type);
+
+		if (data.type == Type::PLAYER)
+		{
+			m_player = &m_shapeSpawner.back();
+			m_playerPresent = true;
+		}
+
+		else if (data.type == Type::TARGET)
+		{
+			m_targetPresent = true;
+		}
+	}
+}
+
+void Game::estimateDifficulty()
+{
+	int rerunAmount{ 3 };
+	// how many times ro rerun the sim
+	for (int i{}; i < rerunAmount; ++i)
+	{
+		reset();
+		m_playSim = true;
+
+		int targetNumber{};
+		for (ConvexShape& target : m_shapeSpawner)
+		{
+			// if the current shape is a target
+			if (target.type() == Type::TARGET)
+			{
+				++targetNumber;
+				// do stuff
+				while (target.awake())
+				{
+					update();
+					render();
+				}
+				printf("Target: %d is sleeping, preparing to shoot\n", targetNumber);
+				
+				shoot(Vector2f{ target.position().x * SCALING_FACTOR, target.position().y * SCALING_FACTOR });
+
+				while (m_currentBullet->awake())
+				{
+					update();
+					render();
+				}
+				printf("Bullet has come to rest\n");
+			}
+		}
+	}
+
+	reset();
+	m_playSim = false;
+}
+
 void Game::cleanUp()
 {
 	SDL_DestroyRenderer(m_renderer);
@@ -239,4 +328,15 @@ void Game::cleanUp()
 	m_renderer = nullptr;
 
 	SDL_Quit();
+}
+
+void Game::shoot(Vector2f targetPosition)
+{
+	b2Vec2 unit{ targetPosition.x - m_player->position().x * SCALING_FACTOR, targetPosition.y - m_player->position().y * SCALING_FACTOR };
+	unit.Normalize();
+	m_shapeSpawner.emplace_back(&m_world, Vector2f{ (m_player->position().x + unit.x / 4) * SCALING_FACTOR,
+		(m_player->position().y + unit.y / 4) * SCALING_FACTOR }, 15, 15, b2_dynamicBody);
+
+	m_currentBullet = &m_shapeSpawner.back();
+	m_shapeSpawner.back().launch(unit, 500.0f);
 }

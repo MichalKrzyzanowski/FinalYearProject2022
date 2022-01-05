@@ -13,6 +13,17 @@ enum class Type
 	TARGET
 };
 
+// temp struct for saving/loading
+struct ShapeData
+{
+	SDL_Color color;
+	Vector2f position;
+	Type type;
+	b2BodyType b2BodyType;
+	int width;
+	int height;
+};
+
 class ConvexShape
 {
 private:
@@ -64,6 +75,7 @@ public:
 
 	Type& type() { return m_type; }
 	SDL_Color& color() { return m_color; }
+	bool awake() { return m_b2Body->IsAwake(); }
 };
 #endif // !CONVEX_SHAPE_H
 
