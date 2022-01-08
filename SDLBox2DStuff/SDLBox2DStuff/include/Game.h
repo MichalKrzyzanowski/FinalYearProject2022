@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <iostream>
 #include <string>
+#include <algorithm>
 #include <box2d.h>
 #include "Rect.h"
 #include "ConvexShape.h"
@@ -9,8 +10,7 @@
 #include "Timer.h"
 #include "Circle.h"
 #include "Button.h"
-#include "Target.h"
-#include "Player.h"
+#include "ConvexShapeContactListener.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -67,12 +67,15 @@ private:
 
 	ConvexShape m_rectanglePrefab;
 	ConvexShape m_squarePrefab;
-	Target m_targetPrefab;
-	Player m_playerPrefab;
+	ConvexShape m_targetPrefab;
+	ConvexShape m_playerPrefab;
 
 	ConvexShape* m_currentShape{};
 	ConvexShape* m_player{};
 	bool m_playerPresent{ false };
+	bool m_estimationMode{ false };
+
+	ConvexShapeContactListener m_contactListener;
 
 	// UI
 	SDL_FRect m_toolbarBg{ 0.0f, SCREEN_HEIGHT - 70.0f, SCREEN_WIDTH, 70.0f };

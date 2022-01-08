@@ -1,7 +1,7 @@
 #include "ConvexShape.h"
 
 
-ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType b2Type, SDL_Color color, Type type) :
+ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType b2Type, Type type, SDL_Color color) :
 	m_world{ world },
 	m_width{ width },
 	m_height{ height },
@@ -9,6 +9,8 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_color{ color },
 	m_type{ type }
 {
+	m_marked = false;
+
 	// setup rect points
 	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y });
 	m_points.push_back(SDL_FPoint{ topLeftPosition.x + m_width, topLeftPosition.y });
@@ -17,9 +19,19 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 
 	m_staticPosition = topLeftPosition;
 
+	struct Data
+	{
+		int h;
+		bool g;
+	};
+	Data* d = new Data();
+	d->g = true;
+	d->h = 40;
+
 	// setup initial box2d shape
 	m_b2BodyDef.type = b2Type;
 	m_b2BodyDef.position.Set((topLeftPosition.x + m_width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_height / 2.0f) / SCALING_FACTOR);
+	m_b2BodyDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
 	m_b2Body = m_world->CreateBody(&m_b2BodyDef);
 	m_b2Shape.SetAsBox(m_width / 2.0f / SCALING_FACTOR, m_height / 2.0f / SCALING_FACTOR);
 

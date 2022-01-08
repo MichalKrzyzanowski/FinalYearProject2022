@@ -10,7 +10,8 @@ enum class Type
 {
 	BLOCK,
 	PLAYER,
-	TARGET
+	TARGET,
+	BULLET
 };
 
 // temp struct for saving/loading
@@ -36,6 +37,7 @@ private:
 	float m_height;
 
 	Type m_type;
+	bool m_marked;
 
 	b2World* m_world;
 
@@ -55,8 +57,8 @@ public:
 		float width,
 		float height,
 		b2BodyType b2Type,
-		SDL_Color color = SDL_Color{ 0, 0, 0, 255 },
-		Type type = Type::BLOCK);
+		Type type = Type::BLOCK,
+		SDL_Color color = SDL_Color{ 0, 0, 0, 255 });
 	~ConvexShape();
 
 	void update();
@@ -68,13 +70,15 @@ public:
 
 	int width() { return m_width; }
 	int height() { return m_height; }
-	b2BodyType b2Body() { return m_b2BodyDef.type; }
+	b2BodyType b2BodyDefType() { return m_b2BodyDef.type; }
+	b2Body* b2Body() { return m_b2Body; }
 
 	b2Vec2 position() { return m_b2Body->GetPosition(); }
 	Vector2f staticPosition() { return m_staticPosition; }
 
 	Type& type() { return m_type; }
 	SDL_Color& color() { return m_color; }
+	bool& marked() { return m_marked; }
 	bool awake() { return m_b2Body->IsAwake(); }
 };
 #endif // !CONVEX_SHAPE_H

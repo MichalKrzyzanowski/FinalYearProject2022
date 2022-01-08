@@ -31,6 +31,18 @@ inline void rotatePoint(float cx, float cy, float angle, SDL_FPoint& point)
 	point.y = newY + cy;
 }
 
+inline float average(int* numbers, size_t size)
+{
+	int total{};
+
+	for (int i{}; i < size; ++i)
+	{
+		total += numbers[i];
+	}
+
+	return static_cast<float>(total) / size;
+}
+
 
 #endif // !UTILITY_H
 

@@ -5,8 +5,8 @@ Game::Game() :
 	m_groundConvexShape{ &m_world, Vector2f{0, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH, 100, b2_staticBody },
 	m_rectanglePrefab{ &m_world, Vector2f{0, 0}, 20, 50, b2_dynamicBody },
 	m_squarePrefab{ &m_world, Vector2f{0, 0}, 20, 20, b2_dynamicBody },
-	m_targetPrefab{ &m_world, Vector2f{0, 0}, },
-	m_playerPrefab{ &m_world, Vector2f{0, 0}, },
+	m_targetPrefab{ &m_world, Vector2f{0, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
+	m_playerPrefab{ &m_world, Vector2f{0, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } },
 	m_circle{ Vector2f{100, 100}, 50 }
 {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -22,6 +22,7 @@ Game::Game() :
 	m_shapeSpawner.reserve(10000); // reserve some space for ALOT of squares
 	m_currentShape = &m_rectanglePrefab;
 	m_selectedButton = &m_rectButton;
+	m_world.SetContactListener(&m_contactListener);
 }
 
 Game::~Game()
@@ -75,7 +76,9 @@ void Game::processEvents(SDL_Event e)
 			{
 				if (m_targetPresent && m_player)
 				{
+					m_estimationMode = true;
 					estimateDifficulty();
+					m_estimationMode = false;
 				}
 			}
 		}
@@ -101,9 +104,9 @@ void Game::processMouseEvents(SDL_Event e)
 					Vector2f{ static_cast<float>(x), static_cast<float>(y) },
 					m_currentShape->width(),
 					m_currentShape->height(),
-					m_currentShape->b2Body(),
-					m_currentShape->color(),
-					m_currentShape->type());
+					m_currentShape->b2BodyDefType(),
+					m_currentShape->type(),
+					m_currentShape->color());
 
 				storeShapeData(&m_shapeSpawner.back());
 
@@ -116,9 +119,9 @@ void Game::processMouseEvents(SDL_Event e)
 					Vector2f{ static_cast<float>(x), static_cast<float>(y) },
 					m_currentShape->width(),
 					m_currentShape->height(),
-					m_currentShape->b2Body(),
-					m_currentShape->color(),
-					m_currentShape->type());
+					m_currentShape->b2BodyDefType(),
+					m_currentShape->type(),
+					m_currentShape->color());
 
 				storeShapeData(&m_shapeSpawner.back());
 
@@ -188,6 +191,15 @@ void Game::update()
 		{
 			shape.update();
 		}
+
+		//if (!m_estimationMode)
+		//{
+		//	// erase-remove idiom here
+		//	m_shapeSpawner.erase(std::remove_if(m_shapeSpawner.begin(), m_shapeSpawner.end(), [&](ConvexShape& shape)
+		//		{
+		//			return shape.marked();
+		//		}), m_shapeSpawner.end());
+		//}
 	}
 }
 
@@ -244,7 +256,7 @@ void Game::storeShapeData(ConvexShape* shape)
 			shape->color(),
 			shape->staticPosition(),
 			shape->type(),
-			shape->b2Body(),
+			shape->b2BodyDefType(),
 			shape->width(),
 			shape->height()
 		});
@@ -264,8 +276,8 @@ void Game::reset()
 			data.width,
 			data.height,
 			data.b2BodyType,
-			data.color,
-			data.type);
+			data.type,
+			data.color);
 
 		if (data.type == Type::PLAYER)
 		{
@@ -283,11 +295,15 @@ void Game::reset()
 void Game::estimateDifficulty()
 {
 	int rerunAmount{ 3 };
+	int shotAttempts{ 4 };
+	std::vector<int> difficultyEstimation{};
+
 	// how many times ro rerun the sim
 	for (int i{}; i < rerunAmount; ++i)
 	{
 		reset();
 		m_playSim = true;
+		difficultyEstimation.push_back(0);
 
 		int targetNumber{};
 		for (ConvexShape& target : m_shapeSpawner)
@@ -296,25 +312,47 @@ void Game::estimateDifficulty()
 			if (target.type() == Type::TARGET)
 			{
 				++targetNumber;
-				// do stuff
+
+				if (target.marked())
+				{
+					printf("Target %d has been already previously hit\n", targetNumber);
+					continue;
+				}
+
 				while (target.awake())
 				{
 					update();
 					render();
 				}
 				printf("Target: %d is sleeping, preparing to shoot\n", targetNumber);
-				
-				shoot(Vector2f{ target.position().x * SCALING_FACTOR, target.position().y * SCALING_FACTOR });
 
-				while (m_currentBullet->awake())
+				for (int i{}; i < shotAttempts; ++i)
 				{
-					update();
-					render();
+					printf("Bullet has been shot\n");
+					shoot(Vector2f{ target.position().x * SCALING_FACTOR, target.position().y * SCALING_FACTOR });
+					++difficultyEstimation.back();
+
+					while (m_currentBullet->awake())
+					{
+						update();
+						render();
+
+					}
+					printf("Bullet has come to rest\n");
+
+					if (target.marked())
+					{
+						printf("Target %d has been hit\n", targetNumber);
+						break;
+					}
 				}
-				printf("Bullet has come to rest\n");
 			}
 		}
 	}
+
+	float difficulty = average(difficultyEstimation.data(), difficultyEstimation.size());
+
+	printf("Difficulty: %f\n", difficulty);
 
 	reset();
 	m_playSim = false;
@@ -335,7 +373,7 @@ void Game::shoot(Vector2f targetPosition)
 	b2Vec2 unit{ targetPosition.x - m_player->position().x * SCALING_FACTOR, targetPosition.y - m_player->position().y * SCALING_FACTOR };
 	unit.Normalize();
 	m_shapeSpawner.emplace_back(&m_world, Vector2f{ (m_player->position().x + unit.x / 4) * SCALING_FACTOR,
-		(m_player->position().y + unit.y / 4) * SCALING_FACTOR }, 15, 15, b2_dynamicBody);
+		(m_player->position().y + unit.y / 4) * SCALING_FACTOR }, 15, 15, b2_dynamicBody, Type::BULLET);
 
 	m_currentBullet = &m_shapeSpawner.back();
 	m_shapeSpawner.back().launch(unit, 500.0f);
