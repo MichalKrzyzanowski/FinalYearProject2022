@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include <box2d.h>
+#include <fstream>
 #include "Rect.h"
 #include "ConvexShape.h"
 #include "Utility.h"
@@ -28,6 +29,9 @@ private:
 	void processMouseEvents(SDL_Event e);
 	void update();
 	void render();
+
+	void saveLevelData(const std::string& fileName);
+	void loadLevelData(const std::string& fileName);
 
 	void storeShapeData(ConvexShape* shape);
 	void reset();

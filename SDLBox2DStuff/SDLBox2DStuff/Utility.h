@@ -1,6 +1,9 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
+#include <vector>
+#include <sstream>
+
 struct Vector2f
 {
 	float x, y;
@@ -41,6 +44,18 @@ inline float average(int* numbers, size_t size)
 	}
 
 	return static_cast<float>(total) / size;
+}
+
+inline std::vector<std::string> splitString(const std::string& s, char delimiter)
+{
+	std::vector<std::string> splits;
+	std::string split;
+	std::istringstream ss(s);
+	while(std::getline(ss, split, delimiter))
+	{
+		splits.push_back(split);
+	}
+	return splits;
 }
 
 

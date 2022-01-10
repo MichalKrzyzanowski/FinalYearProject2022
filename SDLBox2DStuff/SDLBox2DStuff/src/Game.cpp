@@ -81,6 +81,16 @@ void Game::processEvents(SDL_Event e)
 					m_estimationMode = false;
 				}
 			}
+
+			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_s)
+			{
+				saveLevelData("level");
+			}
+
+			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_l)
+			{
+				loadLevelData("level");
+			}
 		}
 
 		processMouseEvents(e);
@@ -249,6 +259,42 @@ void Game::render()
 	SDL_RenderPresent(m_renderer);
 }
 
+void Game::saveLevelData(const std::string& fileName)
+{
+	printf("Saving level data to file\n");
+
+	std::ofstream levelData(fileName + ".txt");
+
+	for (ShapeData& data : m_shapeData)
+	{
+		levelData << data.color.r << "," << data.color.g << "," << data.color.b << "," << data.color.a << "\n";
+		levelData << data.position.x << "," << data.position.y << "\n";
+		levelData << data.height << "\n";
+		levelData << data.width << "\n";
+		levelData << static_cast<int>(data.type) << "\n";
+		levelData << static_cast<int>(data.b2BodyType) << "\n";
+	}
+
+	levelData.close();
+}
+
+void Game::loadLevelData(const std::string& fileName)
+{
+	printf("Loading level data from file\n");
+
+	ShapeData tempData{};
+	int dataLength{ 6 };
+	int currentLine{ 1 };
+
+	std::string temp{};
+	std::ifstream levelData(fileName + ".txt");
+
+	while (std::getline(levelData, temp))
+	{
+		printf("%s\n", temp.c_str());
+	}
+}
+
 void Game::storeShapeData(ConvexShape* shape)
 {
 	m_shapeData.push_back(ShapeData
@@ -260,6 +306,9 @@ void Game::storeShapeData(ConvexShape* shape)
 			shape->width(),
 			shape->height()
 		});
+
+	std::cout << m_shapeData.back().color.r;
+	std::cout << shape->color().a;
 }
 
 void Game::reset()
