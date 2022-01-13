@@ -34,6 +34,7 @@ private:
 	void loadLevelData(const std::string& fileName);
 
 	void storeShapeData(ConvexShape* shape);
+	void storeShapeData(ShapeData* shapeData);
 	void reset();
 	void estimateDifficulty();
 	void cleanUp();

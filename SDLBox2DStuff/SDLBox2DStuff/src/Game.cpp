@@ -133,7 +133,11 @@ void Game::processMouseEvents(SDL_Event e)
 					m_currentShape->type(),
 					m_currentShape->color());
 
+				printf("Color bef: %d %d %d\n", m_currentShape->color().r, m_currentShape->color().g, m_currentShape->color().b);
+
 				storeShapeData(&m_shapeSpawner.back());
+
+				printf("Color after: %d %d %d\n", m_shapeData.back().color.r, m_shapeData.back().color.g, m_shapeData.back().color.b);
 
 				if (m_currentShape->type() == Type::TARGET)
 				{
@@ -265,9 +269,15 @@ void Game::saveLevelData(const std::string& fileName)
 
 	std::ofstream levelData(fileName + ".txt");
 
+	levelData << m_shapeData.size() << "\n";
+
 	for (ShapeData& data : m_shapeData)
 	{
-		levelData << data.color.r << "," << data.color.g << "," << data.color.b << "," << data.color.a << "\n";
+		levelData << static_cast<int>(data.color.r)
+			<< "," << static_cast<int>(data.color.g)
+			<< "," << static_cast<int>(data.color.b)
+			<< "," << static_cast<int>(data.color.a) << "\n";
+
 		levelData << data.position.x << "," << data.position.y << "\n";
 		levelData << data.height << "\n";
 		levelData << data.width << "\n";
@@ -286,13 +296,58 @@ void Game::loadLevelData(const std::string& fileName)
 	int dataLength{ 6 };
 	int currentLine{ 1 };
 
+	double shapeAmt{};
 	std::string temp{};
 	std::ifstream levelData(fileName + ".txt");
 
-	while (std::getline(levelData, temp))
+	std::getline(levelData, temp);
+
+	shapeAmt = std::atof(temp.c_str());
+
+	for (int i{}; i < shapeAmt; ++i)
 	{
-		printf("%s\n", temp.c_str());
+		// get colour data
+		std::getline(levelData, temp);
+
+		std::vector<std::string> stringSplit{ splitString(temp, ',') };
+		tempData.color.r = std::stoi(stringSplit[0]);
+		tempData.color.g = std::stoi(stringSplit[1]);
+		tempData.color.b = std::stoi(stringSplit[2]);
+		tempData.color.a = std::stoi(stringSplit[3]);
+
+		// get position data
+		std::getline(levelData, temp);
+
+		stringSplit.clear();
+		stringSplit = splitString(temp, ',');
+		tempData.position.x = std::atof(stringSplit[0].c_str());
+		tempData.position.y = std::atof(stringSplit[1].c_str());
+
+		// get height data
+		std::getline(levelData, temp);
+		
+		tempData.height = std::stoi(temp);
+
+		// get width data
+		std::getline(levelData, temp);
+		
+		tempData.width = std::stoi(temp);
+
+		// get type data
+		std::getline(levelData, temp);
+
+		tempData.type = static_cast<Type>(std::stoi(temp));
+
+		// get b2bodytype data
+		std::getline(levelData, temp);
+
+		tempData.b2BodyType = static_cast<b2BodyType>(std::stoi(temp));
+
+		// add the temp data to the data vector
+		storeShapeData(&tempData);
 	}
+
+	reset();
 }
 
 void Game::storeShapeData(ConvexShape* shape)
@@ -306,9 +361,11 @@ void Game::storeShapeData(ConvexShape* shape)
 			shape->width(),
 			shape->height()
 		});
+}
 
-	std::cout << m_shapeData.back().color.r;
-	std::cout << shape->color().a;
+void Game::storeShapeData(ShapeData* shapeData)
+{
+	m_shapeData.push_back(*shapeData);
 }
 
 void Game::reset()
