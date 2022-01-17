@@ -2,38 +2,33 @@
 
 
 ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType b2Type, Type type, SDL_Color color) :
-	m_world{ world },
-	m_width{ width },
-	m_height{ height },
-	m_center{ topLeftPosition.x + m_width / 2.0f, topLeftPosition.y + m_height / 2.0f }, // temporary center
-	m_color{ color },
-	m_type{ type }
+	m_world{ world }
 {
+	m_data.width = width;
+	m_data.height = height;
+	m_data.position = topLeftPosition;
+	m_data.height = height;
+	m_data.color = color;
+	m_data.type = type;
+
 	m_marked = false;
+
+	m_center.x = topLeftPosition.x + m_data.width / 2.0f;
+	m_center.y = topLeftPosition.y + m_data.height / 2.0f;
 
 	// setup rect points
 	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y });
-	m_points.push_back(SDL_FPoint{ topLeftPosition.x + m_width, topLeftPosition.y });
-	m_points.push_back(SDL_FPoint{ topLeftPosition.x + m_width, topLeftPosition.y + m_height });
-	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y + m_height });
-
-	m_staticPosition = topLeftPosition;
-
-	struct Data
-	{
-		int h;
-		bool g;
-	};
-	Data* d = new Data();
-	d->g = true;
-	d->h = 40;
+	m_points.push_back(SDL_FPoint{ topLeftPosition.x + m_data.width, topLeftPosition.y });
+	m_points.push_back(SDL_FPoint{ topLeftPosition.x + m_data.width, topLeftPosition.y + m_data.height });
+	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y + m_data.height });
 
 	// setup initial box2d shape
+	m_data.b2BodyType = b2Type;
 	m_b2BodyDef.type = b2Type;
-	m_b2BodyDef.position.Set((topLeftPosition.x + m_width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_height / 2.0f) / SCALING_FACTOR);
+	m_b2BodyDef.position.Set((topLeftPosition.x + m_data.width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_data.height / 2.0f) / SCALING_FACTOR);
 	m_b2BodyDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
 	m_b2Body = m_world->CreateBody(&m_b2BodyDef);
-	m_b2Shape.SetAsBox(m_width / 2.0f / SCALING_FACTOR, m_height / 2.0f / SCALING_FACTOR);
+	m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
 
 
 	if (m_b2BodyDef.type != b2_staticBody)
@@ -101,9 +96,9 @@ void ConvexShape::renderShadow(SDL_Renderer* renderer, Vector2f position)
 
 	std::vector<SDL_FPoint> points{};
 	points.push_back(SDL_FPoint{ position.x, position.y });
-	points.push_back(SDL_FPoint{ position.x + m_width, position.y });
-	points.push_back(SDL_FPoint{ position.x + m_width, position.y + m_height });
-	points.push_back(SDL_FPoint{ position.x, position.y + m_height });
+	points.push_back(SDL_FPoint{ position.x + m_data.width, position.y });
+	points.push_back(SDL_FPoint{ position.x + m_data.width, position.y + m_data.height });
+	points.push_back(SDL_FPoint{ position.x, position.y + m_data.height });
 
 	renderLines(renderer, &points);
 }

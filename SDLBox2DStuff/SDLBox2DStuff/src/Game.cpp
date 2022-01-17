@@ -352,15 +352,7 @@ void Game::loadLevelData(const std::string& fileName)
 
 void Game::storeShapeData(ConvexShape* shape)
 {
-	m_shapeData.push_back(ShapeData
-		{
-			shape->color(),
-			shape->staticPosition(),
-			shape->type(),
-			shape->b2BodyDefType(),
-			shape->width(),
-			shape->height()
-		});
+	m_shapeData.push_back(shape->data());
 }
 
 void Game::storeShapeData(ShapeData* shapeData)

@@ -29,14 +29,11 @@ class ConvexShape
 {
 private:
 	std::vector<SDL_FPoint> m_points; // for rendering
-	SDL_Color m_color;
+
+	ShapeData m_data;
 
 	Vector2f m_center;
-	Vector2f m_staticPosition;
-	float m_width;
-	float m_height;
 
-	Type m_type;
 	bool m_marked;
 
 	b2World* m_world;
@@ -68,16 +65,17 @@ public:
 	void renderLines(SDL_Renderer* renderer, std::vector<SDL_FPoint>* points);
 	void launch(b2Vec2 direction, float power);
 
-	int width() { return m_width; }
-	int height() { return m_height; }
+	int width() { return m_data.width; }
+	int height() { return m_data.height; }
 	b2BodyType b2BodyDefType() { return m_b2BodyDef.type; }
 	b2Body* b2Body() { return m_b2Body; }
 
 	b2Vec2 position() { return m_b2Body->GetPosition(); }
-	Vector2f staticPosition() { return m_staticPosition; }
+	Vector2f staticPosition() { return m_data.position; }
 
-	Type& type() { return m_type; }
-	SDL_Color& color() { return m_color; }
+	Type& type() { return m_data.type; }
+	SDL_Color& color() { return m_data.color; }
+	ShapeData data() { return m_data; }
 	bool& marked() { return m_marked; }
 	bool awake() { return m_b2Body->IsAwake(); }
 };
