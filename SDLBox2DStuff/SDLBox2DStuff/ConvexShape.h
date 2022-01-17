@@ -64,6 +64,7 @@ public:
 	void renderLines(SDL_Renderer* renderer);
 	void renderLines(SDL_Renderer* renderer, std::vector<SDL_FPoint>* points);
 	void launch(b2Vec2 direction, float power);
+	void setShape();
 
 	int width() { return m_data.width; }
 	int height() { return m_data.height; }

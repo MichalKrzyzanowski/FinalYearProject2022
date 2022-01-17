@@ -28,7 +28,8 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_b2BodyDef.position.Set((topLeftPosition.x + m_data.width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_data.height / 2.0f) / SCALING_FACTOR);
 	m_b2BodyDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
 	m_b2Body = m_world->CreateBody(&m_b2BodyDef);
-	m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
+	setShape();
+	//m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
 
 
 	if (m_b2BodyDef.type != b2_staticBody)
@@ -140,4 +141,16 @@ void ConvexShape::renderLines(SDL_Renderer* renderer, std::vector<SDL_FPoint>* p
 void ConvexShape::launch(b2Vec2 direction, float power)
 {
 	m_b2Body->ApplyForceToCenter(b2Vec2{ direction.x * m_b2Body->GetMass() * power, direction.y * m_b2Body->GetMass() * power }, true);
+}
+
+void ConvexShape::setShape()
+{
+	std::vector<b2Vec2> points;
+
+	for (SDL_FPoint point : m_points)
+	{
+		points.push_back(b2Vec2{ point.x / SCALING_FACTOR, point.y / SCALING_FACTOR });
+	}
+
+	m_b2Shape.Set(points.data(), points.size());
 }

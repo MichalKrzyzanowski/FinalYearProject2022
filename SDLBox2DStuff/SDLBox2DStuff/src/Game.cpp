@@ -118,7 +118,7 @@ void Game::processMouseEvents(SDL_Event e)
 					m_currentShape->type(),
 					m_currentShape->color());
 
-				storeShapeData(&m_shapeSpawner.back());
+				storeShapeData(&m_shapeSpawner.back().data());
 
 				m_player = &m_shapeSpawner.back();
 				m_playerPresent = true;
@@ -135,7 +135,7 @@ void Game::processMouseEvents(SDL_Event e)
 
 				printf("Color bef: %d %d %d\n", m_currentShape->color().r, m_currentShape->color().g, m_currentShape->color().b);
 
-				storeShapeData(&m_shapeSpawner.back());
+				storeShapeData(&m_shapeSpawner.back().data());
 
 				printf("Color after: %d %d %d\n", m_shapeData.back().color.r, m_shapeData.back().color.g, m_shapeData.back().color.b);
 
@@ -348,11 +348,6 @@ void Game::loadLevelData(const std::string& fileName)
 	}
 
 	reset();
-}
-
-void Game::storeShapeData(ConvexShape* shape)
-{
-	m_shapeData.push_back(shape->data());
 }
 
 void Game::storeShapeData(ShapeData* shapeData)
