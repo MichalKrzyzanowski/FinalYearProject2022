@@ -291,6 +291,8 @@ void Game::saveLevelData(const std::string& fileName)
 void Game::loadLevelData(const std::string& fileName)
 {
 	printf("Loading level data from file\n");
+	
+	m_shapeData.clear();
 
 	ShapeData tempData{};
 	int dataLength{ 6 };
