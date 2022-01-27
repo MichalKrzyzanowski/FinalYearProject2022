@@ -28,7 +28,7 @@ struct ShapeData
 class ConvexShape
 {
 private:
-	std::vector<SDL_FPoint> m_points; // for rendering
+	std::vector<b2Vec2> m_points; // for rendering
 
 	ShapeData m_data;
 

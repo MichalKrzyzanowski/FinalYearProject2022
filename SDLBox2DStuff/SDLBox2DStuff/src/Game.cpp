@@ -3,10 +3,10 @@
 Game::Game() :
 	m_gameIsRunning{ false },
 	m_groundConvexShape{ &m_world, Vector2f{0, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH, 100, b2_staticBody },
-	m_rectanglePrefab{ &m_world, Vector2f{0, 0}, 20, 50, b2_dynamicBody },
-	m_squarePrefab{ &m_world, Vector2f{0, 0}, 20, 20, b2_dynamicBody },
-	m_targetPrefab{ &m_world, Vector2f{0, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
-	m_playerPrefab{ &m_world, Vector2f{0, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } },
+	m_rectanglePrefab{ &m_world, Vector2f{-100, 0}, 20, 50, b2_dynamicBody },
+	m_squarePrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody },
+	m_targetPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
+	m_playerPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } },
 	m_circle{ Vector2f{100, 100}, 50 }
 {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -23,6 +23,12 @@ Game::Game() :
 	m_currentShape = &m_rectanglePrefab;
 	m_selectedButton = &m_rectButton;
 	m_world.SetContactListener(&m_contactListener);
+
+	m_debugDraw.setRenderer(m_renderer);
+	m_world.SetDebugDraw(&m_debugDraw);
+	m_debugDraw.SetFlags(b2Draw::e_shapeBit);
+
+	//SDL_RenderDrawPointF(m_renderer, 100, 100);
 }
 
 Game::~Game()
@@ -219,15 +225,21 @@ void Game::update()
 
 void Game::render()
 {
+	//SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+	//SDL_RenderClear(m_renderer);
+
+	//for (ConvexShape& shape : m_shapeSpawner)
+	//{
+	//	shape.render(m_renderer);
+	//}
+	//m_groundConvexShape.render(m_renderer);
+	////m_circle.render(m_renderer);
+
+
 	SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderClear(m_renderer);
 
-	for (ConvexShape& shape : m_shapeSpawner)
-	{
-		shape.render(m_renderer);
-	}
-	m_groundConvexShape.render(m_renderer);
-	//m_circle.render(m_renderer);
+	m_world.DebugDraw();
 
 	if (!m_playSim)
 	{

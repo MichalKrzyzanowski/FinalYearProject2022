@@ -157,6 +157,7 @@
     <ClCompile Include="Circle.cpp" />
     <ClCompile Include="ConvexShape.cpp" />
     <ClCompile Include="Rect.cpp" />
+    <ClCompile Include="SDLDraw.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Timer.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="include\Timer.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Button.h" />
+    <ClInclude Include="SDLDraw.h" />
     <ClInclude Include="Utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

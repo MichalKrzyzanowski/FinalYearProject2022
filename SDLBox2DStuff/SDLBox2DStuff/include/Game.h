@@ -12,6 +12,7 @@
 #include "Circle.h"
 #include "Button.h"
 #include "ConvexShapeContactListener.h"
+#include "SDLDraw.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -80,6 +81,8 @@ private:
 	bool m_estimationMode{ false };
 
 	ConvexShapeContactListener m_contactListener;
+
+	SDLDraw m_debugDraw;
 
 	// UI
 	SDL_FRect m_toolbarBg{ 0.0f, SCREEN_HEIGHT - 70.0f, SCREEN_WIDTH, 70.0f };

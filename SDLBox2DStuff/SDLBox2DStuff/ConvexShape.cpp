@@ -17,10 +17,10 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_center.y = topLeftPosition.y + m_data.height / 2.0f;
 
 	// setup rect points
-	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y });
-	m_points.push_back(SDL_FPoint{ topLeftPosition.x + m_data.width, topLeftPosition.y });
-	m_points.push_back(SDL_FPoint{ topLeftPosition.x + m_data.width, topLeftPosition.y + m_data.height });
-	m_points.push_back(SDL_FPoint{ topLeftPosition.x, topLeftPosition.y + m_data.height });
+	m_points.push_back(b2Vec2{ topLeftPosition.x, topLeftPosition.y });
+	m_points.push_back(b2Vec2{ topLeftPosition.x + m_data.width, topLeftPosition.y });
+	m_points.push_back(b2Vec2{ topLeftPosition.x + m_data.width, topLeftPosition.y + m_data.height });
+	m_points.push_back(b2Vec2{ topLeftPosition.x, topLeftPosition.y + m_data.height });
 
 	// setup initial box2d shape
 	m_data.b2BodyType = b2Type;
@@ -76,12 +76,12 @@ void ConvexShape::setPosition(b2Vec2 position)
 
 void ConvexShape::rotate(float radians)
 {
-	for (SDL_FPoint& point : m_points)
+	/*for (SDL_FPoint& point : m_points)
 	{
 		rotatePoint(m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
 			m_b2Body->GetWorldCenter().y * SCALING_FACTOR,
 			radians, point);
-	}
+	}*/
 }
 
 void ConvexShape::render(SDL_Renderer* renderer)
@@ -106,7 +106,7 @@ void ConvexShape::renderShadow(SDL_Renderer* renderer, Vector2f position)
 
 void ConvexShape::renderLines(SDL_Renderer* renderer)
 {
-	SDL_RenderDrawLinesF(renderer, m_points.data(), m_points.size());
+	//SDL_RenderDrawLinesF(renderer, m_points.data(), m_points.size());
 
 	// draw a line from the last point to the first point
 	SDL_RenderDrawLineF(renderer,
@@ -116,6 +116,10 @@ void ConvexShape::renderLines(SDL_Renderer* renderer)
 		m_points.data()[0].y);
 
 	// draw the center of mass
+	SDL_RenderDrawPointF(renderer,
+		m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
+		m_b2Body->GetWorldCenter().y * SCALING_FACTOR);
+
 	SDL_RenderDrawPointF(renderer,
 		m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
 		m_b2Body->GetWorldCenter().y * SCALING_FACTOR);
@@ -145,12 +149,12 @@ void ConvexShape::launch(b2Vec2 direction, float power)
 
 void ConvexShape::setShape()
 {
-	std::vector<b2Vec2> points;
+	/*std::vector<b2Vec2> points;
 
 	for (SDL_FPoint point : m_points)
 	{
 		points.push_back(b2Vec2{ point.x / SCALING_FACTOR, point.y / SCALING_FACTOR });
-	}
+	}*/
 
-	m_b2Shape.Set(points.data(), points.size());
+	m_b2Shape.Set(m_points.data(), m_points.size());
 }
