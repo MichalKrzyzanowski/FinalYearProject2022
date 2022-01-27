@@ -17,10 +17,10 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_center.y = topLeftPosition.y + m_data.height / 2.0f;
 
 	// setup rect points
-	m_points.push_back(b2Vec2{ topLeftPosition.x, topLeftPosition.y });
-	m_points.push_back(b2Vec2{ topLeftPosition.x + m_data.width, topLeftPosition.y });
-	m_points.push_back(b2Vec2{ topLeftPosition.x + m_data.width, topLeftPosition.y + m_data.height });
-	m_points.push_back(b2Vec2{ topLeftPosition.x, topLeftPosition.y + m_data.height });
+	m_points.push_back(b2Vec2{ topLeftPosition.x / SCALING_FACTOR, topLeftPosition.y / SCALING_FACTOR });
+	m_points.push_back(b2Vec2{ (topLeftPosition.x + m_data.width) / SCALING_FACTOR, topLeftPosition.y / SCALING_FACTOR });
+	m_points.push_back(b2Vec2{ (topLeftPosition.x + m_data.width) / SCALING_FACTOR, (topLeftPosition.y + m_data.height) / SCALING_FACTOR });
+	m_points.push_back(b2Vec2{ topLeftPosition.x / SCALING_FACTOR, (topLeftPosition.y + m_data.height) / SCALING_FACTOR });
 
 	// setup initial box2d shape
 	m_data.b2BodyType = b2Type;
@@ -28,8 +28,8 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_b2BodyDef.position.Set((topLeftPosition.x + m_data.width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_data.height / 2.0f) / SCALING_FACTOR);
 	m_b2BodyDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
 	m_b2Body = m_world->CreateBody(&m_b2BodyDef);
-	//setShape();
-	m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
+	setShape();
+	//m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
 
 
 	if (m_b2BodyDef.type != b2_staticBody)
