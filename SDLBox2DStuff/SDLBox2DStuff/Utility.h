@@ -9,6 +9,7 @@ struct Vector2f
 	float x, y;
 };
 
+
 #define PI 3.14159265358979323846
 
 const float SCALING_FACTOR{ 100.0f };
@@ -22,6 +23,18 @@ inline float Rad2Deg(float rad)
 {
 	return rad * (180.0f / PI);
 }
+
+inline Vector2f rotateVector(Vector2f v, float angle)
+{
+	float cs = cos(angle);
+	float sn = sin(angle);
+
+	float px = v.x * cs - v.y * sn;
+	float py = v.x * sn + v.y * cs;
+
+	return Vector2f{ px, py };
+}
+
 inline void rotatePoint(float cx, float cy, float angle, SDL_FPoint& point)
 {
 	point.x -= cx;

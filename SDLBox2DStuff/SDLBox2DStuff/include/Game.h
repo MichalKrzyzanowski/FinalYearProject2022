@@ -58,6 +58,12 @@ private:
 	ConvexShape m_leftWallConvexShape;
 	ConvexShape m_RightWallConvexShape;
 
+	// shot variables
+	const Uint8* state = SDL_GetKeyboardState(nullptr);
+	float m_power{ 500.0f };
+	/*float m_shotAngle;
+	Vector2f m_shotDirection{ 0.0f, 0.0f };*/
+
 	Circle m_circle;
 
 	bool m_playSim{ false };

@@ -137,6 +137,9 @@ void Game::processMouseEvents(SDL_Event e)
 
 				m_player = &m_shapeSpawner.back();
 				m_playerPresent = true;
+
+				//m_shotDirection.x = m_player->position().x * SCALING_FACTOR + 100.0f;
+				//m_shotDirection.y = m_player->position().y * SCALING_FACTOR;
 			}
 			else if (m_currentShape->type() != Type::PLAYER)
 			{
@@ -222,8 +225,6 @@ void Game::update()
 
 		if (!m_shootMode)
 		{
-
-
 			for (ConvexShape& shape : m_shapeSpawner)
 			{
 				//shape.update();
@@ -238,6 +239,35 @@ void Game::update()
 			{
 				m_shootMode = true;
 				printf("Shoot Phase\n");
+			}
+		}
+		else
+		{
+			if (m_player)
+			{
+				/*if (state[SDL_SCANCODE_UP])
+				{
+					m_shotAngle += 0.5f;
+					m_shotDirection = rotateVector(m_shotDirection, 0.5f);
+				}
+
+				if (state[SDL_SCANCODE_DOWN])
+				{
+					m_shotAngle -= 0.5f;
+					m_shotDirection = rotateVector(m_shotDirection, -0.5f);
+				}*/
+
+				if (state[SDL_SCANCODE_LEFT])
+				{
+					m_power -= 1.0f;
+					printf("Power: %f\n\n", m_power);
+				}
+
+				if (state[SDL_SCANCODE_RIGHT])
+				{
+					m_power += 1.0f;
+					printf("Power: %f\n\n", m_power);
+				}
 			}
 		}
 		//if (!m_estimationMode)
@@ -298,6 +328,15 @@ void Game::render()
 		SDL_RenderFillRectF(m_renderer, &m_targetSelect);
 		SDL_SetRenderDrawColor(m_renderer, 0x24, 0x3C, 0xAE, 0xFF);
 		SDL_RenderFillRectF(m_renderer, &m_playerSelect);
+	}
+	else
+	{
+		if (m_player)
+		{
+			//b2Vec2 unit{ static_cast<float>(x) - m_player->position().x * SCALING_FACTOR, static_cast<float>(y) - m_player->position().y * SCALING_FACTOR };
+			
+			SDL_RenderDrawLine(m_renderer, m_player->position().x * SCALING_FACTOR, m_player->position().y * SCALING_FACTOR, static_cast<float>(x), static_cast<float>(y));
+		}
 	}
 
 	SDL_RenderPresent(m_renderer);
@@ -513,5 +552,5 @@ void Game::shoot(Vector2f targetPosition)
 		(m_player->position().y + unit.y / 4) * SCALING_FACTOR }, 15, 15, b2_dynamicBody, Type::BULLET);
 
 	m_currentBullet = &m_shapeSpawner.back();
-	m_shapeSpawner.back().launch(unit, 500.0f);
+	m_shapeSpawner.back().launch(unit, m_power);
 }
