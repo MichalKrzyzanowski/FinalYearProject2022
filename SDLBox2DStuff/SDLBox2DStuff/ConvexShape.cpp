@@ -28,8 +28,8 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_b2BodyDef.position.Set((topLeftPosition.x + m_data.width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_data.height / 2.0f) / SCALING_FACTOR);
 	m_b2BodyDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
 	m_b2Body = m_world->CreateBody(&m_b2BodyDef);
-	setShape();
-	//m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
+	//setShape();
+	m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
 
 
 	if (m_b2BodyDef.type != b2_staticBody)

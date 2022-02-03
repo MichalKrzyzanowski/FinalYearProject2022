@@ -41,6 +41,7 @@ private:
 	void shoot(Vector2f targetPosition);
 
 	bool m_gameIsRunning;
+	bool m_shootMode{ true };
 
 	SDL_Window* m_window;
 	SDL_Renderer* m_renderer;
@@ -54,6 +55,8 @@ private:
 	int32_t m_positionIterations{ 2 };
 
 	ConvexShape m_groundConvexShape;
+	ConvexShape m_leftWallConvexShape;
+	ConvexShape m_RightWallConvexShape;
 
 	Circle m_circle;
 

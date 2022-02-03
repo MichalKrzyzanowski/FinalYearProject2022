@@ -3,6 +3,8 @@
 Game::Game() :
 	m_gameIsRunning{ false },
 	m_groundConvexShape{ &m_world, Vector2f{0, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH, 100, b2_staticBody },
+	m_leftWallConvexShape{ &m_world, Vector2f{SCREEN_WIDTH, 0}, 10, SCREEN_HEIGHT, b2_staticBody },
+	m_RightWallConvexShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody },
 	m_rectanglePrefab{ &m_world, Vector2f{-100, 0}, 20, 50, b2_dynamicBody },
 	m_squarePrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody },
 	m_targetPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
@@ -27,6 +29,8 @@ Game::Game() :
 	m_debugDraw.setRenderer(m_renderer);
 	m_world.SetDebugDraw(&m_debugDraw);
 	m_debugDraw.SetFlags(b2Draw::e_shapeBit);
+
+	printf("Edit Phase\n");
 
 	//SDL_RenderDrawPointF(m_renderer, 100, 100);
 }
@@ -73,6 +77,11 @@ void Game::processEvents(SDL_Event e)
 			if (!m_playSim)
 			{
 				reset();
+				printf("Edit Phase\n");
+			}
+			else
+			{
+				printf("Shoot Phase\n");
 			}
 		}
 
@@ -139,11 +148,11 @@ void Game::processMouseEvents(SDL_Event e)
 					m_currentShape->type(),
 					m_currentShape->color());
 
-				printf("Color bef: %d %d %d\n", m_currentShape->color().r, m_currentShape->color().g, m_currentShape->color().b);
+				//printf("Color bef: %d %d %d\n", m_currentShape->color().r, m_currentShape->color().g, m_currentShape->color().b);
 
 				storeShapeData(&m_shapeSpawner.back().data());
 
-				printf("Color after: %d %d %d\n", m_shapeData.back().color.r, m_shapeData.back().color.g, m_shapeData.back().color.b);
+				//printf("Color after: %d %d %d\n", m_shapeData.back().color.r, m_shapeData.back().color.g, m_shapeData.back().color.b);
 
 				if (m_currentShape->type() == Type::TARGET)
 				{
@@ -192,11 +201,13 @@ void Game::processMouseEvents(SDL_Event e)
 		}
 	}
 
-	if (m_playSim && m_player)
+	if (m_playSim && m_player && m_shootMode)
 	{
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 		{
 			shoot(Vector2f{ static_cast<float>(x), static_cast<float>(y) });
+			m_shootMode = false;
+			printf("Simulate Phase\n");
 		}
 	}
 }
@@ -207,11 +218,28 @@ void Game::update()
 	{
 		m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
 
-		for (ConvexShape& shape : m_shapeSpawner)
-		{
-			shape.update();
-		}
+		bool readyToShoot{ true };
 
+		if (!m_shootMode)
+		{
+
+
+			for (ConvexShape& shape : m_shapeSpawner)
+			{
+				//shape.update();
+				if (shape.awake())
+				{
+					readyToShoot = false;
+					break;
+				}
+			}
+
+			if (readyToShoot)
+			{
+				m_shootMode = true;
+				printf("Shoot Phase\n");
+			}
+		}
 		//if (!m_estimationMode)
 		//{
 		//	// erase-remove idiom here
@@ -401,6 +429,8 @@ void Game::reset()
 
 void Game::estimateDifficulty()
 {
+	printf("Difficulty Simulation Phase\n");
+
 	int rerunAmount{ 3 };
 	int shotAttempts{ 4 };
 	std::vector<int> difficultyEstimation{};
