@@ -4,7 +4,8 @@ Game::Game() :
 	m_gameIsRunning{ false },
 	m_groundConvexShape{ &m_world, Vector2f{0, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH, 100, b2_staticBody },
 	m_leftWallConvexShape{ &m_world, Vector2f{SCREEN_WIDTH, 0}, 10, SCREEN_HEIGHT, b2_staticBody },
-	m_RightWallConvexShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody },
+	m_rightWallConvexShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody },
+	m_roofConvexShape{ &m_world, Vector2f{0, -10}, SCREEN_WIDTH, 10, b2_staticBody },
 	m_rectanglePrefab{ &m_world, Vector2f{-100, 0}, 20, 50, b2_dynamicBody },
 	m_squarePrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody },
 	m_targetPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
@@ -76,16 +77,18 @@ void Game::processEvents(SDL_Event e)
 
 			if (!m_playSim)
 			{
+				m_gameState = GameState::EDIT;
 				reset();
 				printf("Edit Phase\n");
 			}
 			else
 			{
+				m_gameState = GameState::GAMEPLAY;
 				printf("Shoot Phase\n");
 			}
 		}
 
-		if (!m_playSim)
+		if (m_gameState == GameState::EDIT)
 		{
 			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_g)
 			{
@@ -108,6 +111,14 @@ void Game::processEvents(SDL_Event e)
 			}
 		}
 
+		else if (m_gameState == GameState::LOSE || m_gameState == GameState::WIN)
+		{
+			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_r)
+			{
+				m_gameState = GameState::EDIT;
+			}
+		}
+
 		processMouseEvents(e);
 	}
 
@@ -118,7 +129,7 @@ void Game::processMouseEvents(SDL_Event e)
 	Uint32 buttons = SDL_GetMouseState(&x, &y);
 
 
-	if (!m_playSim && y < m_toolbarBg.y)
+	if (m_gameState == GameState::EDIT && y < m_toolbarBg.y)
 	{
 		// if the left mouse button is pressed down
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
@@ -164,7 +175,7 @@ void Game::processMouseEvents(SDL_Event e)
 			}
 		}
 	}
-	else if (!m_playSim && y > m_toolbarBg.y)
+	else if (m_gameState == GameState::EDIT && y > m_toolbarBg.y)
 	{
 		if ((x >= m_squareButton.position().x && x <= m_squareButton.position().x + m_squareButton.width()) &&
 			(y >= m_squareButton.position().y && y <= m_squareButton.position().y + m_squareButton.height()))
@@ -204,12 +215,13 @@ void Game::processMouseEvents(SDL_Event e)
 		}
 	}
 
-	if (m_playSim && m_player && m_shootMode)
+	if (m_gameState == GameState::GAMEPLAY && m_player && m_shootMode && m_bulletsCount > 0)
 	{
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 		{
 			shoot(Vector2f{ static_cast<float>(x), static_cast<float>(y) });
 			m_shootMode = false;
+			--m_bulletsCount;
 			printf("Simulate Phase\n");
 		}
 	}
@@ -217,7 +229,7 @@ void Game::processMouseEvents(SDL_Event e)
 
 void Game::update()
 {
-	if (m_playSim)
+	if (m_gameState == GameState::GAMEPLAY)
 	{
 		m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
 
@@ -235,9 +247,34 @@ void Game::update()
 				}
 			}
 
+			bool gameWin{ true };
+
+			for (ConvexShape& target : m_shapeSpawner)
+			{
+				//shape.update();
+				if (target.type() == Type::TARGET)
+				{
+					if (!target.marked())
+					{
+						gameWin = false;
+						break;
+					}
+				}
+			}
+
 			if (readyToShoot)
 			{
 				m_shootMode = true;
+
+				if (m_bulletsCount <= 0 && !gameWin)
+				{
+					m_gameState = GameState::LOSE;
+				}
+				else if (gameWin)
+				{
+					m_gameState = GameState::WIN;
+				}
+
 				printf("Shoot Phase\n");
 			}
 		}
@@ -279,6 +316,16 @@ void Game::update()
 		//		}), m_shapeSpawner.end());
 		//}
 	}
+
+	else if(m_gameState == GameState::WIN)
+	{
+		printf("you win\n");
+	}
+
+	else if (m_gameState == GameState::LOSE)
+	{
+		printf("you lose\n");
+	}
 }
 
 void Game::render()
@@ -299,7 +346,7 @@ void Game::render()
 
 	m_world.DebugDraw();
 
-	if (!m_playSim)
+	if (m_gameState == GameState::EDIT)
 	{
 		if (y < m_toolbarBg.y && m_currentShape)
 		{
@@ -438,6 +485,7 @@ void Game::storeShapeData(ShapeData* shapeData)
 
 void Game::reset()
 {
+	m_bulletsCount = m_TOTAL_BULLETS;
 	m_shapeSpawner.clear();
 	m_playerPresent = false;
 	m_targetPresent = false;
@@ -478,7 +526,7 @@ void Game::estimateDifficulty()
 	for (int i{}; i < rerunAmount; ++i)
 	{
 		reset();
-		m_playSim = true;
+		m_gameState = GameState::GAMEPLAY;
 		difficultyEstimation.push_back(0);
 
 		int targetNumber{};
@@ -531,7 +579,7 @@ void Game::estimateDifficulty()
 	printf("Difficulty: %f\n", difficulty);
 
 	reset();
-	m_playSim = false;
+	m_gameState = GameState::EDIT;
 }
 
 void Game::cleanUp()

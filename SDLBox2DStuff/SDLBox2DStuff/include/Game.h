@@ -17,6 +17,14 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
+enum class GameState
+{
+	EDIT,
+	GAMEPLAY,
+	WIN,
+	LOSE
+};
+
 class Game
 {
 public:
@@ -56,11 +64,16 @@ private:
 
 	ConvexShape m_groundConvexShape;
 	ConvexShape m_leftWallConvexShape;
-	ConvexShape m_RightWallConvexShape;
+	ConvexShape m_rightWallConvexShape;
+	ConvexShape m_roofConvexShape;
+
+	GameState m_gameState = GameState::EDIT;
 
 	// shot variables
 	const Uint8* state = SDL_GetKeyboardState(nullptr);
 	float m_power{ 500.0f };
+	const int m_TOTAL_BULLETS{ 3 };
+	int m_bulletsCount{ m_TOTAL_BULLETS };
 	/*float m_shotAngle;
 	Vector2f m_shotDirection{ 0.0f, 0.0f };*/
 
