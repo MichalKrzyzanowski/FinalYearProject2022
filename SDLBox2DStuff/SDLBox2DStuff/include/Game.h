@@ -1,4 +1,6 @@
 #include <SDL.h>
+#include <SDL_ttf.h>
+#include <SDL_image.h>
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -53,6 +55,11 @@ private:
 
 	SDL_Window* m_window;
 	SDL_Renderer* m_renderer;
+	TTF_Font* m_font;
+
+	// text objects
+	LTexture m_phaseText;
+	LTexture m_bulletCountText;
 
 	// box2d setup
 	b2Vec2 m_gravity{ 0.0f, 9.8f };

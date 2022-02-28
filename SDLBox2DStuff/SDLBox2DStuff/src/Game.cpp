@@ -14,6 +14,12 @@ Game::Game() :
 {
 	SDL_Init(SDL_INIT_VIDEO);
 
+	int imgFlags = IMG_INIT_PNG;
+
+	IMG_Init((imgFlags) & imgFlags);
+
+	TTF_Init();
+
 	m_window = SDL_CreateWindow("SDL game loop",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
@@ -21,6 +27,8 @@ Game::Game() :
 		SDL_WINDOW_SHOWN);
 	m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
+
+	m_font = TTF_OpenFont("assets/LemonMilk.otf", 18);
 
 	m_shapeSpawner.reserve(10000); // reserve some space for ALOT of squares
 	m_currentShape = &m_rectanglePrefab;
@@ -33,6 +41,10 @@ Game::Game() :
 
 	printf("Edit Phase\n");
 
+	std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
+
+	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 	//SDL_RenderDrawPointF(m_renderer, 100, 100);
 }
 
@@ -80,11 +92,13 @@ void Game::processEvents(SDL_Event e)
 				m_gameState = GameState::EDIT;
 				reset();
 				printf("Edit Phase\n");
+				m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 			}
 			else
 			{
 				m_gameState = GameState::GAMEPLAY;
 				printf("Shoot Phase\n");
+				m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 			}
 		}
 
@@ -222,6 +236,11 @@ void Game::processMouseEvents(SDL_Event e)
 			shoot(Vector2f{ static_cast<float>(x), static_cast<float>(y) });
 			m_shootMode = false;
 			--m_bulletsCount;
+
+			std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
+
+			m_phaseText = loadFromRenderedText("Simulate Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+			m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 			printf("Simulate Phase\n");
 		}
 	}
@@ -269,13 +288,18 @@ void Game::update()
 				if (m_bulletsCount <= 0 && !gameWin)
 				{
 					m_gameState = GameState::LOSE;
+					m_phaseText = loadFromRenderedText("You Lose!", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+					return;
 				}
 				else if (gameWin)
 				{
 					m_gameState = GameState::WIN;
+					m_phaseText = loadFromRenderedText("You Win!", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+					return;
 				}
 
 				printf("Shoot Phase\n");
+				m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 			}
 		}
 		else
@@ -317,14 +341,14 @@ void Game::update()
 		//}
 	}
 
-	else if(m_gameState == GameState::WIN)
+	else if (m_gameState == GameState::WIN)
 	{
-		printf("you win\n");
+		//printf("you win\n");
 	}
 
 	else if (m_gameState == GameState::LOSE)
 	{
-		printf("you lose\n");
+		//printf("you lose\n");
 	}
 }
 
@@ -381,10 +405,14 @@ void Game::render()
 		if (m_player)
 		{
 			//b2Vec2 unit{ static_cast<float>(x) - m_player->position().x * SCALING_FACTOR, static_cast<float>(y) - m_player->position().y * SCALING_FACTOR };
-			
+
 			SDL_RenderDrawLine(m_renderer, m_player->position().x * SCALING_FACTOR, m_player->position().y * SCALING_FACTOR, static_cast<float>(x), static_cast<float>(y));
 		}
 	}
+
+	SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+	renderText(m_renderer, &m_phaseText, Vector2f{ SCREEN_WIDTH - static_cast<float>(m_phaseText.width) - 10, 10 });
+	renderText(m_renderer, &m_bulletCountText, Vector2f{ SCREEN_WIDTH - static_cast<float>(m_bulletCountText.width) - 10, 40 });
 
 	SDL_RenderPresent(m_renderer);
 }
@@ -417,7 +445,7 @@ void Game::saveLevelData(const std::string& fileName)
 void Game::loadLevelData(const std::string& fileName)
 {
 	printf("Loading level data from file\n");
-	
+
 	m_shapeData.clear();
 
 	ShapeData tempData{};
@@ -453,12 +481,12 @@ void Game::loadLevelData(const std::string& fileName)
 
 		// get height data
 		std::getline(levelData, temp);
-		
+
 		tempData.height = std::stoi(temp);
 
 		// get width data
 		std::getline(levelData, temp);
-		
+
 		tempData.width = std::stoi(temp);
 
 		// get type data
@@ -486,6 +514,10 @@ void Game::storeShapeData(ShapeData* shapeData)
 void Game::reset()
 {
 	m_bulletsCount = m_TOTAL_BULLETS;
+	std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
+
+	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+
 	m_shapeSpawner.clear();
 	m_playerPresent = false;
 	m_targetPresent = false;
@@ -517,6 +549,7 @@ void Game::reset()
 void Game::estimateDifficulty()
 {
 	printf("Difficulty Simulation Phase\n");
+	m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 
 	int rerunAmount{ 3 };
 	int shotAttempts{ 4 };
@@ -584,11 +617,21 @@ void Game::estimateDifficulty()
 
 void Game::cleanUp()
 {
+	SDL_DestroyTexture(m_phaseText.texture);
+	m_phaseText.texture = nullptr;
+
+	SDL_DestroyTexture(m_bulletCountText.texture);
+	m_bulletCountText.texture = nullptr;
+
 	SDL_DestroyRenderer(m_renderer);
 	SDL_DestroyWindow(m_window);
+	TTF_CloseFont(m_font);
+	m_font = nullptr;
 	m_window = nullptr;
 	m_renderer = nullptr;
 
+	TTF_Quit();
+	IMG_Quit();
 	SDL_Quit();
 }
 

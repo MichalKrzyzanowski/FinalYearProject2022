@@ -3,10 +3,18 @@
 
 #include <vector>
 #include <sstream>
+#include <SDL_ttf.h>
 
 struct Vector2f
 {
 	float x, y;
+};
+
+struct LTexture
+{
+	SDL_Texture* texture;
+	int width;
+	int height;
 };
 
 
@@ -69,6 +77,48 @@ inline std::vector<std::string> splitString(const std::string& s, char delimiter
 		splits.push_back(split);
 	}
 	return splits;
+}
+
+inline LTexture loadFromRenderedText(const char* textureText, SDL_Color textColor, TTF_Font* font, SDL_Renderer* renderer)
+{
+	LTexture texture{ nullptr, 0, 0 };
+
+	//Render text surface
+	SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText, textColor);
+	if (textSurface == NULL)
+	{
+		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+	}
+	else
+	{
+		//Create texture from surface pixels
+		texture.texture = SDL_CreateTextureFromSurface(renderer, textSurface);
+		if (texture.texture == NULL)
+		{
+			printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
+		}
+		else
+		{
+			texture.width = textSurface->w;
+			texture.height = textSurface->h;
+		}
+
+		//Get rid of old surface
+		SDL_FreeSurface(textSurface);
+	}
+
+	return texture;
+}
+
+inline void renderText(SDL_Renderer* renderer, LTexture* texture, Vector2f position)
+{
+	SDL_Rect dest;
+	dest.x = position.x;
+	dest.y = position.y;
+	dest.w = texture->width;
+	dest.h = texture->height;
+
+	SDL_RenderCopy(renderer, texture->texture, nullptr, &dest);
 }
 
 
