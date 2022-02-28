@@ -49,6 +49,7 @@ Game::Game() :
 	std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
 
 	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+	m_warningText = loadFromRenderedText("Level needs a player and a target!", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 	//SDL_RenderDrawPointF(m_renderer, 100, 100);
 }
 
@@ -109,6 +110,8 @@ void Game::processEvents(SDL_Event e)
 				else
 				{
 					m_playSim = !m_playSim;
+					m_showWarning = true;
+					m_warningTimer.restart();
 				}
 			}
 		}
@@ -261,6 +264,8 @@ void Game::update()
 {
 	if (m_gameState == GameState::GAMEPLAY)
 	{
+		m_showWarning = false;
+
 		m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
 
 		bool readyToShoot{ true };
@@ -382,14 +387,12 @@ void Game::update()
 		//}
 	}
 
-	else if (m_gameState == GameState::WIN)
+	else if (m_gameState == GameState::EDIT)
 	{
-		//printf("you win\n");
-	}
-
-	else if (m_gameState == GameState::LOSE)
-	{
-		//printf("you lose\n");
+		if(m_warningTimer.getTicksAsSeconds() > 2.0f)
+		{
+			m_showWarning = false;
+		}
 	}
 }
 
@@ -457,6 +460,11 @@ void Game::render()
 	SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
 	renderText(m_renderer, &m_phaseText, Vector2f{ SCREEN_WIDTH - static_cast<float>(m_phaseText.width) - 10, 10 });
 	renderText(m_renderer, &m_bulletCountText, Vector2f{ SCREEN_WIDTH - static_cast<float>(m_bulletCountText.width) - 10, 40 });
+
+	if (m_showWarning)
+	{
+		renderText(m_renderer, &m_warningText, Vector2f{ 10, 10 });
+	}
 
 	SDL_RenderPresent(m_renderer);
 }

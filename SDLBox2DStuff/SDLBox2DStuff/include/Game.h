@@ -57,10 +57,14 @@ private:
 	SDL_Renderer* m_renderer;
 	TTF_Font* m_font;
 
+	bool m_showWarning{ false };
+	Timer m_warningTimer{};
+
 	// text objects
 	LTexture m_phaseText;
 	LTexture m_powerText;
 	LTexture m_bulletCountText;
+	LTexture m_warningText;
 
 	// box2d setup
 	b2Vec2 m_gravity{ 0.0f, 9.8f };
