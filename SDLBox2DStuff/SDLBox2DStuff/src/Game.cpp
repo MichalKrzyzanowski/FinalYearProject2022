@@ -45,6 +45,10 @@ Game::Game() :
 
 	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+
+	std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
+
+	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 	//SDL_RenderDrawPointF(m_renderer, 100, 100);
 }
 
@@ -96,9 +100,16 @@ void Game::processEvents(SDL_Event e)
 			}
 			else
 			{
-				m_gameState = GameState::GAMEPLAY;
-				printf("Shoot Phase\n");
-				m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+				if (m_targetPresent && m_playerPresent)
+				{
+					m_gameState = GameState::GAMEPLAY;
+					printf("Shoot Phase\n");
+					m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+				}
+				else
+				{
+					m_playSim = !m_playSim;
+				}
 			}
 		}
 
@@ -320,14 +331,44 @@ void Game::update()
 
 				if (state[SDL_SCANCODE_LEFT])
 				{
-					m_power -= 1.0f;
+					if (state[SDL_SCANCODE_LSHIFT])
+					{
+						m_power -= m_powerGain;
+					}
+
+					m_power -= m_powerGain;
+					
+					if (m_power <= m_MIN_POWER)
+					{
+						m_power = m_MIN_POWER;
+					}
+
 					printf("Power: %f\n\n", m_power);
+
+					std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
+
+					m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 				}
 
 				if (state[SDL_SCANCODE_RIGHT])
 				{
-					m_power += 1.0f;
+					if (state[SDL_SCANCODE_LSHIFT])
+					{
+						m_power += m_powerGain;
+					}
+
+					m_power += m_powerGain;
+
+					if (m_power >= m_MAX_POWER)
+					{
+						m_power = m_MAX_POWER;
+					}
+
 					printf("Power: %f\n\n", m_power);
+
+					std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
+
+					m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 				}
 			}
 		}
@@ -408,6 +449,9 @@ void Game::render()
 
 			SDL_RenderDrawLine(m_renderer, m_player->position().x * SCALING_FACTOR, m_player->position().y * SCALING_FACTOR, static_cast<float>(x), static_cast<float>(y));
 		}
+
+		SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+		renderText(m_renderer, &m_powerText, Vector2f{ 10, SCREEN_HEIGHT - static_cast<float>(m_phaseText.height) - 10 });
 	}
 
 	SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
@@ -622,6 +666,9 @@ void Game::cleanUp()
 
 	SDL_DestroyTexture(m_bulletCountText.texture);
 	m_bulletCountText.texture = nullptr;
+
+	SDL_DestroyTexture(m_powerText.texture);
+	m_powerText.texture = nullptr;
 
 	SDL_DestroyRenderer(m_renderer);
 	SDL_DestroyWindow(m_window);

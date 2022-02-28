@@ -59,6 +59,7 @@ private:
 
 	// text objects
 	LTexture m_phaseText;
+	LTexture m_powerText;
 	LTexture m_bulletCountText;
 
 	// box2d setup
@@ -78,7 +79,12 @@ private:
 
 	// shot variables
 	const Uint8* state = SDL_GetKeyboardState(nullptr);
-	float m_power{ 500.0f };
+	float m_power{ 400.0f };
+	float m_powerGain{ 2.0f };
+
+	const float m_MAX_POWER{ 800.0f };
+	const float m_MIN_POWER{ 200.0f };
+
 	const int m_TOTAL_BULLETS{ 3 };
 	int m_bulletsCount{ m_TOTAL_BULLETS };
 	/*float m_shotAngle;
