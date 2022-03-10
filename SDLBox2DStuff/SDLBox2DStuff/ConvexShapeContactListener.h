@@ -21,11 +21,13 @@ public:
 			if (first->type() == Type::TARGET)
 			{
 				first->marked() = true;
+				first->active() = false;
 			}
 
 			else if (other->type() == Type::TARGET)
 			{
 				other->marked() = true;
+				other->active() = false;
 			}
 		}
 

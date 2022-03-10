@@ -268,6 +268,20 @@ void Game::update()
 
 		m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
 
+		if (!m_world.IsLocked())
+		{
+			for (ConvexShape& shape : m_shapeSpawner)
+			{
+				if (!shape.active() && shape.b2Body()->IsEnabled())
+				{
+					shape.b2Body()->SetEnabled(false);
+					shape.b2Body()->SetAwake(false);
+					shape.b2Body()->SetTransform(b2Vec2{ -1000.0f, -1000.0f }, 0.0f);
+					printf("stopped");
+				}
+			}
+		}
+
 		bool readyToShoot{ true };
 
 		if (!m_shootMode)
@@ -277,6 +291,7 @@ void Game::update()
 				//shape.update();
 				if (shape.awake())
 				{
+					printf("oof");
 					readyToShoot = false;
 					break;
 				}

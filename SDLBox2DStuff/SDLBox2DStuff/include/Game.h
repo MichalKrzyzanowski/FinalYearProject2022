@@ -67,10 +67,12 @@ private:
 	LTexture m_warningText;
 
 	// box2d setup
-	b2Vec2 m_gravity{ 0.0f, 9.8f };
+	float fps{ 15.0f };
+
+	b2Vec2 m_gravity{ 0.0f, 39.2f }; // fps 60: grav = 9.8f
 	b2World m_world{ m_gravity };
 
-	float m_timeStep{ 1.0f / 60.0f };
+	float m_timeStep{ 1.0f / fps };
 	int32_t m_velocityIterations{ 6 };
 	int32_t m_positionIterations{ 2 };
 

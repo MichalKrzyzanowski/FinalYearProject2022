@@ -12,6 +12,7 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	m_data.type = type;
 
 	m_marked = false;
+	m_active = true;
 
 	m_center.x = topLeftPosition.x + m_data.width / 2.0f;
 	m_center.y = topLeftPosition.y + m_data.height / 2.0f;
@@ -31,6 +32,11 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	//setShape();
 	m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
 
+
+	if (m_data.type == Type::BULLET)
+	{
+		m_b2Body->SetBullet(true);
+	}
 
 	if (m_b2BodyDef.type != b2_staticBody)
 	{

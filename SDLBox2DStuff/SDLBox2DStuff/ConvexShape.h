@@ -35,6 +35,7 @@ private:
 	Vector2f m_center;
 
 	bool m_marked;
+	bool m_active;
 
 	b2World* m_world;
 
@@ -79,6 +80,7 @@ public:
 	ShapeData data() { return m_data; }
 	bool& marked() { return m_marked; }
 	bool awake() { return m_b2Body->IsAwake(); }
+	bool& active() { return m_active; }
 };
 #endif // !CONVEX_SHAPE_H
 
