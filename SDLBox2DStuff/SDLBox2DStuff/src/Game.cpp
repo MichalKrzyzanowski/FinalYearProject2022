@@ -172,7 +172,7 @@ void Game::processMouseEvents(SDL_Event e)
 					m_currentShape->type(),
 					m_currentShape->color());
 
-				storeShapeData(&m_shapeSpawner.back().data());
+				//storeShapeData(&m_shapeSpawner.back().data());
 
 				m_player = &m_shapeSpawner.back();
 				m_playerPresent = true;
@@ -192,7 +192,7 @@ void Game::processMouseEvents(SDL_Event e)
 
 				//printf("Color bef: %d %d %d\n", m_currentShape->color().r, m_currentShape->color().g, m_currentShape->color().b);
 
-				storeShapeData(&m_shapeSpawner.back().data());
+				//storeShapeData(&m_shapeSpawner.back().data());
 
 				//printf("Color after: %d %d %d\n", m_shapeData.back().color.r, m_shapeData.back().color.g, m_shapeData.back().color.b);
 
@@ -615,6 +615,13 @@ void Game::reset()
 
 void Game::estimateDifficulty()
 {
+	fps = 15.0f;
+	m_gravity = b2Vec2{ 0.0f, 39.2f };
+
+	m_world.SetGravity(m_gravity);
+
+	m_timeStep = 1.0f / fps;
+
 	printf("Difficulty Simulation Phase\n");
 	m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 
@@ -680,6 +687,13 @@ void Game::estimateDifficulty()
 
 	reset();
 	m_gameState = GameState::EDIT;
+
+	fps = 60.0f;
+	m_gravity = b2Vec2{ 0.0f, 9.8f };
+
+	m_world.SetGravity(m_gravity);
+
+	m_timeStep = 1.0f / fps;
 }
 
 void Game::cleanUp()
