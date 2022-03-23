@@ -55,16 +55,31 @@ private:
 
 	SDL_Window* m_window;
 	SDL_Renderer* m_renderer;
-	TTF_Font* m_font;
+	TTF_Font* m_fontNormal;
+	TTF_Font* m_fontSmall;
+	TTF_Font* m_fontTiny;
 
 	bool m_showWarning{ false };
+	bool m_showHelp{ true };
 	Timer m_warningTimer{};
+
+	bool m_showLevelSave{ false };
+	Timer m_levelSaveTimer{};
 
 	// text objects
 	LTexture m_phaseText;
 	LTexture m_powerText;
 	LTexture m_bulletCountText;
 	LTexture m_warningText;
+	LTexture m_levelSaveText;
+
+
+	LTexture m_rectangleText;
+	LTexture m_squareText;
+	LTexture m_targetText;
+	LTexture m_playerText;
+
+	LTexture m_helpText;
 
 	// box2d setup
 	float fps{ 60.0f };
@@ -128,9 +143,9 @@ private:
 	// UI
 	SDL_FRect m_toolbarBg{ 0.0f, SCREEN_HEIGHT - 70.0f, SCREEN_WIDTH, 70.0f };
 	UI::Button m_squareButton{ Vector2f{m_toolbarBg.x + 20.0f, m_toolbarBg.y + 10.0f} };
-	UI::Button m_rectButton{ Vector2f{m_toolbarBg.x + 100.0f, m_toolbarBg.y + 10.0f} };
-	UI::Button m_targetButton{ Vector2f{m_toolbarBg.x + 180.0f, m_toolbarBg.y + 10.0f} };
-	UI::Button m_playerButton{ Vector2f{m_toolbarBg.x + 260.0f, m_toolbarBg.y + 10.0f} };
+	UI::Button m_rectButton{ Vector2f{m_toolbarBg.x + 120.0f, m_toolbarBg.y + 10.0f} };
+	UI::Button m_targetButton{ Vector2f{m_toolbarBg.x + 220.0f, m_toolbarBg.y + 10.0f} };
+	UI::Button m_playerButton{ Vector2f{m_toolbarBg.x + 320.0f, m_toolbarBg.y + 10.0f} };
 
 	UI::Button* m_selectedButton{ nullptr };
 

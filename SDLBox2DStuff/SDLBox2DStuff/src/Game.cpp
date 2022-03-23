@@ -29,7 +29,9 @@ Game::Game() :
 	m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
 
-	m_font = TTF_OpenFont("assets/LemonMilk.otf", 18);
+	m_fontNormal = TTF_OpenFont("assets/LemonMilk.otf", 18);
+	m_fontSmall = TTF_OpenFont("assets/LemonMilk.otf", 14);
+	m_fontTiny = TTF_OpenFont("assets/LemonMilk.otf", 8);
 
 	m_shapeSpawner.reserve(10000); // reserve some space for ALOT of squares
 	m_currentShape = &m_rectanglePrefab;
@@ -44,13 +46,23 @@ Game::Game() :
 
 	std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
 
-	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
-	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
 	std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
 
-	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
-	m_warningText = loadFromRenderedText("Level needs a player and a target!", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+	m_warningText = loadFromRenderedText("Level needs a player and a target!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+
+
+	m_squareText = loadFromRenderedText("Square Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+	m_rectangleText = loadFromRenderedText("Rectangle Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+	m_targetText = loadFromRenderedText("Target Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+	m_playerText = loadFromRenderedText("Player Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+
+	m_helpText.texture = SDL_CreateTextureFromSurface(m_renderer,
+		TTF_RenderText_Blended_Wrapped(m_fontNormal, "H:    Toggle Help\nG:    Run Difficulty Estimation\nS:    Save Level\nL:    Load Level\nSpacebar:    Toggle Edit/Play Mode",
+			SDL_Color{ 0, 0, 0, 255 }, 400));
 }
 
 Game::~Game()
@@ -83,12 +95,12 @@ void Game::processEvents(SDL_Event e)
 		}
 
 		// checks if the escape key is pressed down
-		if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
+		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
 		{
 			m_gameIsRunning = false;
 		}
 
-		if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE)
+		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE)
 		{
 			m_playSim = !m_playSim;
 
@@ -98,7 +110,7 @@ void Game::processEvents(SDL_Event e)
 				reset();
 				m_shootMode = false;
 				printf("Edit Phase\n");
-				m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+				m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 			}
 			else
 			{
@@ -106,7 +118,7 @@ void Game::processEvents(SDL_Event e)
 				{
 					m_gameState = GameState::GAMEPLAY;
 					printf("Shoot Phase\n");
-					m_phaseText = loadFromRenderedText("Simulate Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+					m_phaseText = loadFromRenderedText("Simulate Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 				}
 				else
 				{
@@ -119,7 +131,7 @@ void Game::processEvents(SDL_Event e)
 
 		if (m_gameState == GameState::EDIT)
 		{
-			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_g)
+			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_g)
 			{
 				if (m_targetPresent && m_player)
 				{
@@ -129,22 +141,27 @@ void Game::processEvents(SDL_Event e)
 				}
 			}
 
-			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_s)
+			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_h)
+			{
+				m_showHelp = !m_showHelp;
+			}
+
+			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_s)
 			{
 				saveLevelData("level");
+
+				m_levelSaveText = loadFromRenderedText("Level Saved!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+				m_showLevelSave = true;
+				m_levelSaveTimer.restart();
 			}
 
-			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_l)
+			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_l)
 			{
 				loadLevelData("level");
-			}
-		}
 
-		else if (m_gameState == GameState::LOSE || m_gameState == GameState::WIN)
-		{
-			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_r)
-			{
-				m_gameState = GameState::EDIT;
+				m_levelSaveText = loadFromRenderedText("Level Loaded!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+				m_showLevelSave = true;
+				m_levelSaveTimer.restart();
 			}
 		}
 
@@ -250,8 +267,8 @@ void Game::processMouseEvents(SDL_Event e)
 
 			std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
 
-			m_phaseText = loadFromRenderedText("Simulate Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
-			m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+			m_phaseText = loadFromRenderedText("Simulate Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+			m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 			printf("Simulate Phase\n");
 		}
 	}
@@ -315,18 +332,18 @@ void Game::update()
 				if (m_bulletsCount <= 0 && !gameWin)
 				{
 					m_gameState = GameState::LOSE;
-					m_phaseText = loadFromRenderedText("You Lose!", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+					m_phaseText = loadFromRenderedText("You Lose!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 					return;
 				}
 				else if (gameWin)
 				{
 					m_gameState = GameState::WIN;
-					m_phaseText = loadFromRenderedText("You Win!", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+					m_phaseText = loadFromRenderedText("You Win!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 					return;
 				}
 
 				printf("Shoot Phase\n");
-				m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+				m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 			}
 		}
 		else
@@ -351,7 +368,7 @@ void Game::update()
 
 					std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
 
-					m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+					m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 				}
 
 				if (state[SDL_SCANCODE_RIGHT])
@@ -372,7 +389,7 @@ void Game::update()
 
 					std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
 
-					m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+					m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 				}
 			}
 		}
@@ -383,6 +400,11 @@ void Game::update()
 		if(m_warningTimer.getTicksAsSeconds() > 2.0f)
 		{
 			m_showWarning = false;
+		}
+		
+		if(m_levelSaveTimer.getTicksAsSeconds() > 2.0f)
+		{
+			m_showLevelSave = false;
 		}
 	}
 }
@@ -424,6 +446,24 @@ void Game::render()
 		SDL_RenderFillRectF(m_renderer, &m_squareShapeSelect);
 		SDL_RenderFillRectF(m_renderer, &m_rectangleShapeSelect);
 
+		if (m_showHelp)
+		{
+			SDL_FRect helpRect{ SCREEN_WIDTH - 250, SCREEN_HEIGHT - m_toolbarBg.h - 100, 250, 100 };
+			SDL_RenderCopyF(m_renderer, m_helpText.texture, NULL, &helpRect);
+		}
+
+		renderText(m_renderer, &m_squareText, Vector2f{ m_squareButton.position().x - m_squareButton.width() / 4,
+										m_squareButton.position().y + 45.0f, });
+
+		renderText(m_renderer, &m_rectangleText, Vector2f{ m_rectButton.position().x - m_rectButton.width() / 2,
+											m_rectButton.position().y + 45.0f, });
+
+		renderText(m_renderer, &m_targetText, Vector2f{ m_targetButton.position().x - m_targetButton.width() / 4,
+											m_targetButton.position().y + 45.0f, });
+
+		renderText(m_renderer, &m_playerText, Vector2f{ m_playerButton.position().x - m_playerButton.width() / 4,
+											m_playerButton.position().y + 45.0f, });
+
 		if (m_selectedButton)
 		{
 			SDL_SetRenderDrawColor(m_renderer, 0xD2, 0x21, 0x21, 0xFF);
@@ -453,6 +493,11 @@ void Game::render()
 	if (m_showWarning)
 	{
 		renderText(m_renderer, &m_warningText, Vector2f{ 10, 10 });
+	}
+
+	if (m_showLevelSave)
+	{
+		renderText(m_renderer, &m_levelSaveText, Vector2f{ 10, 30 });
 	}
 
 	SDL_RenderPresent(m_renderer);
@@ -557,7 +602,7 @@ void Game::reset()
 	m_bulletsCount = m_TOTAL_BULLETS;
 	std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
 
-	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
 	m_shapeSpawner.clear();
 	m_playerPresent = false;
@@ -597,7 +642,7 @@ void Game::estimateDifficulty()
 	m_timeStep = 1.0f / fps;
 
 	printf("Difficulty Simulation Phase\n");
-	m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+	m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
 	int rerunAmount{ 3 };
 	int shotAttempts{ 4 };
@@ -681,10 +726,13 @@ void Game::cleanUp()
 	SDL_DestroyTexture(m_powerText.texture);
 	m_powerText.texture = nullptr;
 
+	SDL_DestroyTexture(m_rectangleText.texture);
+	m_rectangleText.texture = nullptr;
+
 	SDL_DestroyRenderer(m_renderer);
 	SDL_DestroyWindow(m_window);
-	TTF_CloseFont(m_font);
-	m_font = nullptr;
+	TTF_CloseFont(m_fontNormal);
+	m_fontNormal = nullptr;
 	m_window = nullptr;
 	m_renderer = nullptr;
 
