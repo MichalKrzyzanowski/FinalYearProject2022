@@ -25,6 +25,7 @@ Game::Game() :
 		SDL_WINDOWPOS_UNDEFINED,
 		SCREEN_WIDTH, SCREEN_HEIGHT,
 		SDL_WINDOW_SHOWN);
+
 	m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
 
@@ -50,7 +51,6 @@ Game::Game() :
 
 	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 	m_warningText = loadFromRenderedText("Level needs a player and a target!", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
-	//SDL_RenderDrawPointF(m_renderer, 100, 100);
 }
 
 Game::~Game()
@@ -96,6 +96,7 @@ void Game::processEvents(SDL_Event e)
 			{
 				m_gameState = GameState::EDIT;
 				reset();
+				m_shootMode = false;
 				printf("Edit Phase\n");
 				m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 			}
@@ -105,7 +106,7 @@ void Game::processEvents(SDL_Event e)
 				{
 					m_gameState = GameState::GAMEPLAY;
 					printf("Shoot Phase\n");
-					m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
+					m_phaseText = loadFromRenderedText("Simulate Phase", SDL_Color{ 0, 0, 0, 255 }, m_font, m_renderer);
 				}
 				else
 				{
@@ -172,13 +173,11 @@ void Game::processMouseEvents(SDL_Event e)
 					m_currentShape->type(),
 					m_currentShape->color());
 
-				//storeShapeData(&m_shapeSpawner.back().data());
+				storeShapeData(m_shapeSpawner.back().data());
 
 				m_player = &m_shapeSpawner.back();
 				m_playerPresent = true;
 
-				//m_shotDirection.x = m_player->position().x * SCALING_FACTOR + 100.0f;
-				//m_shotDirection.y = m_player->position().y * SCALING_FACTOR;
 			}
 			else if (m_currentShape->type() != Type::PLAYER)
 			{
@@ -190,11 +189,9 @@ void Game::processMouseEvents(SDL_Event e)
 					m_currentShape->type(),
 					m_currentShape->color());
 
-				//printf("Color bef: %d %d %d\n", m_currentShape->color().r, m_currentShape->color().g, m_currentShape->color().b);
 
-				//storeShapeData(&m_shapeSpawner.back().data());
+				storeShapeData(m_shapeSpawner.back().data());
 
-				//printf("Color after: %d %d %d\n", m_shapeData.back().color.r, m_shapeData.back().color.g, m_shapeData.back().color.b);
 
 				if (m_currentShape->type() == Type::TARGET)
 				{
@@ -291,7 +288,6 @@ void Game::update()
 				//shape.update();
 				if (shape.awake())
 				{
-					printf("oof");
 					readyToShoot = false;
 					break;
 				}
@@ -337,18 +333,6 @@ void Game::update()
 		{
 			if (m_player)
 			{
-				/*if (state[SDL_SCANCODE_UP])
-				{
-					m_shotAngle += 0.5f;
-					m_shotDirection = rotateVector(m_shotDirection, 0.5f);
-				}
-
-				if (state[SDL_SCANCODE_DOWN])
-				{
-					m_shotAngle -= 0.5f;
-					m_shotDirection = rotateVector(m_shotDirection, -0.5f);
-				}*/
-
 				if (state[SDL_SCANCODE_LEFT])
 				{
 					if (state[SDL_SCANCODE_LSHIFT])
@@ -392,14 +376,6 @@ void Game::update()
 				}
 			}
 		}
-		//if (!m_estimationMode)
-		//{
-		//	// erase-remove idiom here
-		//	m_shapeSpawner.erase(std::remove_if(m_shapeSpawner.begin(), m_shapeSpawner.end(), [&](ConvexShape& shape)
-		//		{
-		//			return shape.marked();
-		//		}), m_shapeSpawner.end());
-		//}
 	}
 
 	else if (m_gameState == GameState::EDIT)
@@ -463,8 +439,6 @@ void Game::render()
 	{
 		if (m_player)
 		{
-			//b2Vec2 unit{ static_cast<float>(x) - m_player->position().x * SCALING_FACTOR, static_cast<float>(y) - m_player->position().y * SCALING_FACTOR };
-
 			SDL_RenderDrawLine(m_renderer, m_player->position().x * SCALING_FACTOR, m_player->position().y * SCALING_FACTOR, static_cast<float>(x), static_cast<float>(y));
 		}
 
@@ -567,15 +541,15 @@ void Game::loadLevelData(const std::string& fileName)
 		tempData.b2BodyType = static_cast<b2BodyType>(std::stoi(temp));
 
 		// add the temp data to the data vector
-		storeShapeData(&tempData);
+		storeShapeData(tempData);
 	}
 
 	reset();
 }
 
-void Game::storeShapeData(ShapeData* shapeData)
+void Game::storeShapeData(ShapeData shapeData)
 {
-	m_shapeData.push_back(*shapeData);
+	m_shapeData.push_back(shapeData);
 }
 
 void Game::reset()

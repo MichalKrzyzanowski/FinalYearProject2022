@@ -40,6 +40,10 @@ void SDLDraw::DrawSolidPolygon(const b2Vec2* vertices, int32 vertexCount, const 
 		points.push_back(SDL_FPoint{ vertices[i].x * SCALING_FACTOR, vertices[i].y * SCALING_FACTOR });
 	}
 
+
+	//SDL_RenderGeometry(m_renderer, NULL, points.data(), vertexCount, NULL, vertexCount);
+
+
 	SDL_RenderDrawLinesF(m_renderer, points.data(), points.size());
 
 	// draw a line from the last point to the first point
