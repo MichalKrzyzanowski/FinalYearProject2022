@@ -16,7 +16,7 @@ Game::Game() :
 
 	int imgFlags = IMG_INIT_PNG;
 
-	IMG_Init((imgFlags) & imgFlags);
+	IMG_Init((imgFlags)&imgFlags);
 
 	TTF_Init();
 
@@ -100,7 +100,7 @@ void Game::processEvents(SDL_Event e)
 			m_gameIsRunning = false;
 		}
 
-		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE)
+		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE && !m_estimationMode)
 		{
 			m_playSim = !m_playSim;
 
@@ -131,37 +131,51 @@ void Game::processEvents(SDL_Event e)
 
 		if (m_gameState == GameState::EDIT)
 		{
+			if (!m_estimationMode)
+			{
+				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_h)
+				{
+					m_showHelp = !m_showHelp;
+				}
+
+				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_s)
+				{
+					saveLevelData("level");
+
+					m_levelSaveText = loadFromRenderedText("Level Saved!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+					m_showLevelSave = true;
+					m_levelSaveTimer.restart();
+				}
+
+				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_l)
+				{
+					loadLevelData("level");
+
+					m_levelSaveText = loadFromRenderedText("Level Loaded!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+					m_showLevelSave = true;
+					m_levelSaveTimer.restart();
+				}
+			}
+
 			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_g)
 			{
 				if (m_targetPresent && m_player)
 				{
+					printf("Difficulty Simulation Phase\n");
+					m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+
 					m_estimationMode = true;
+					SDL_EventState(SDL_KEYUP, SDL_IGNORE);
 					estimateDifficulty();
+					SDL_EventState(SDL_KEYUP, SDL_ENABLE);
 					m_estimationMode = false;
 				}
-			}
-
-			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_h)
-			{
-				m_showHelp = !m_showHelp;
-			}
-
-			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_s)
-			{
-				saveLevelData("level");
-
-				m_levelSaveText = loadFromRenderedText("Level Saved!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-				m_showLevelSave = true;
-				m_levelSaveTimer.restart();
-			}
-
-			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_l)
-			{
-				loadLevelData("level");
-
-				m_levelSaveText = loadFromRenderedText("Level Loaded!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-				m_showLevelSave = true;
-				m_levelSaveTimer.restart();
+				else
+				{
+					m_playSim = !m_playSim;
+					m_showWarning = true;
+					m_warningTimer.restart();
+				}
 			}
 		}
 
@@ -279,6 +293,7 @@ void Game::update()
 	if (m_gameState == GameState::GAMEPLAY)
 	{
 		m_showWarning = false;
+		m_showLevelSave = false;
 
 		m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
 
@@ -329,26 +344,30 @@ void Game::update()
 			{
 				m_shootMode = true;
 
-				if (m_bulletsCount <= 0 && !gameWin)
+				if (!m_estimationMode)
 				{
-					m_gameState = GameState::LOSE;
-					m_phaseText = loadFromRenderedText("You Lose!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-					return;
-				}
-				else if (gameWin)
-				{
-					m_gameState = GameState::WIN;
-					m_phaseText = loadFromRenderedText("You Win!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-					return;
+					if (m_bulletsCount <= 0 && !gameWin)
+					{
+						m_gameState = GameState::LOSE;
+						m_phaseText = loadFromRenderedText("You Lose!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+						return;
+					}
+					else if (gameWin)
+					{
+						m_gameState = GameState::WIN;
+						m_phaseText = loadFromRenderedText("You Win!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+						return;
+					}
+
+					printf("Shoot Phase\n");
+					m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 				}
 
-				printf("Shoot Phase\n");
-				m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 			}
 		}
 		else
 		{
-			if (m_player)
+			if (m_player && !m_estimationMode)
 			{
 				if (state[SDL_SCANCODE_LEFT])
 				{
@@ -358,7 +377,7 @@ void Game::update()
 					}
 
 					m_power -= m_powerGain;
-					
+
 					if (m_power <= m_MIN_POWER)
 					{
 						m_power = m_MIN_POWER;
@@ -397,12 +416,12 @@ void Game::update()
 
 	else if (m_gameState == GameState::EDIT)
 	{
-		if(m_warningTimer.getTicksAsSeconds() > 2.0f)
+		if (m_warningTimer.getTicksAsSeconds() > 2.0f)
 		{
 			m_showWarning = false;
 		}
-		
-		if(m_levelSaveTimer.getTicksAsSeconds() > 2.0f)
+
+		if (m_levelSaveTimer.getTicksAsSeconds() > 2.0f)
 		{
 			m_showLevelSave = false;
 		}
@@ -448,7 +467,7 @@ void Game::render()
 
 		if (m_showHelp)
 		{
-			SDL_FRect helpRect{ SCREEN_WIDTH - 250, SCREEN_HEIGHT - m_toolbarBg.h - 100, 250, 100 };
+			SDL_FRect helpRect{ SCREEN_WIDTH - 250, SCREEN_HEIGHT - m_toolbarBg.h - 110, 250, 100 };
 			SDL_RenderCopyF(m_renderer, m_helpText.texture, NULL, &helpRect);
 		}
 
@@ -634,21 +653,18 @@ void Game::reset()
 
 void Game::estimateDifficulty()
 {
-	fps = 15.0f;
+	/*fps = 15.0f;
 	m_gravity = b2Vec2{ 0.0f, 39.2f };
 
 	m_world.SetGravity(m_gravity);
 
-	m_timeStep = 1.0f / fps;
-
-	printf("Difficulty Simulation Phase\n");
-	m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+	m_timeStep = 1.0f / fps;*/
 
 	int rerunAmount{ 3 };
 	int shotAttempts{ 4 };
 	std::vector<int> difficultyEstimation{};
 
-	// how many times ro rerun the sim
+	// how many times to rerun the sim
 	for (int i{}; i < rerunAmount; ++i)
 	{
 		reset();
@@ -707,12 +723,14 @@ void Game::estimateDifficulty()
 	reset();
 	m_gameState = GameState::EDIT;
 
-	fps = 60.0f;
+	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+
+	/*fps = 60.0f;
 	m_gravity = b2Vec2{ 0.0f, 9.8f };
 
 	m_world.SetGravity(m_gravity);
 
-	m_timeStep = 1.0f / fps;
+	m_timeStep = 1.0f / fps;*/
 }
 
 void Game::cleanUp()
