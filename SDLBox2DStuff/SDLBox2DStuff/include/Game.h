@@ -46,7 +46,13 @@ private:
 
 	void storeShapeData(ShapeData shapeData);
 	void reset();
+
 	void estimateDifficulty();
+	void quitEstimation();
+	int calculateDistanceScore();
+	int distanceScoreEvaluation(int shortestDistance);
+	int evaluateDifficulty(int bestScore);
+
 	void cleanUp();
 	void shoot(Vector2f targetPosition);
 
@@ -108,6 +114,8 @@ private:
 
 	const int m_TOTAL_BULLETS{ 3 };
 	int m_bulletsCount{ m_TOTAL_BULLETS };
+
+	SDL_FPoint m_aimTargetPoint{};
 	/*float m_shotAngle;
 	Vector2f m_shotDirection{ 0.0f, 0.0f };*/
 
