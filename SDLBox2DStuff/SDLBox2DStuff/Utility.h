@@ -121,6 +121,20 @@ inline void renderText(SDL_Renderer* renderer, LTexture* texture, Vector2f posit
 	SDL_RenderCopy(renderer, texture->texture, nullptr, &dest);
 }
 
+inline int getNumberFromString(std::string str)
+{
+	int i{};
+
+	for (; str.length(); ++i)
+	{
+		if (isdigit(str[i])) break;
+	}
+
+	str = str.substr(i, str.length() - i);
+
+	return atoi(str.c_str());
+}
+
 
 #endif // !UTILITY_H
 

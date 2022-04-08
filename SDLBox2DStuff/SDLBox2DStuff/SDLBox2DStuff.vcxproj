@@ -82,13 +82,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(BOX2D_SDK)/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK_16)/include;$(BOX2D_SDK)/include/box2d;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(SDL_SDK_16)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOX2D_SDK)/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK)/include;$(BOX2D_SDK)/include/box2d;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(SDL_SDK)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(BOX2D_SDK)/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK_16)/include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(SDL_SDK_16)/lib/x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOX2D_SDK)/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK)/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(SDL_SDK)/lib/x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

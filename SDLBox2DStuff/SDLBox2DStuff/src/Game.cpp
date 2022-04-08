@@ -675,7 +675,7 @@ void Game::estimateDifficulty()
 	m_gameState = GameState::GAMEPLAY;
 
 	int powerStep{ 1 };
-	int circleStep{ 1 };
+	int angleIncrement{ 45 };
 
 	int bulletCount{ 3 };
 
@@ -683,7 +683,7 @@ void Game::estimateDifficulty()
 	m_scores.reserve(5000);
 
 	// loop through each power level
-	for (; m_power < m_MAX_POWER; m_power += (m_powerGain * powerStep))
+	for (; m_power < m_MAX_POWER; m_power += ((m_MAX_POWER - m_MIN_POWER) / 4))
 	{
 		printf("Setting Power\n");
 
@@ -696,9 +696,15 @@ void Game::estimateDifficulty()
 
 		m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
+		SDL_Vertex shotTarget{};
+
+		shotTarget.position = SDL_FPoint{ (m_player->position().x * SCALING_FACTOR) + 30.0f, (m_player->position().y * SCALING_FACTOR) };
+
 		// loop through a 360 degree circle
-		for (int j{}; j < m_circle.pointCount(); j += circleStep)
+		for (int j{}; j < 360; j += angleIncrement)
 		{
+			rotatePoint((m_player->position().x * SCALING_FACTOR), (m_player->position().y * SCALING_FACTOR), Deg2Rad(angleIncrement), shotTarget.position);
+
 			int currentScore{ 0 };
 
 			printf("Starting circle loop\n");
@@ -732,9 +738,9 @@ void Game::estimateDifficulty()
 
 				if (shotReady)
 				{
-					shoot(Vector2f{ (float)m_circle[j].x, (float)m_circle[j].y });
-					m_aimTargetPoint.x = (float)m_circle[j].x;
-					m_aimTargetPoint.y = (float)m_circle[j].y;
+					shoot(Vector2f{ shotTarget.position.x, shotTarget.position.y });
+					m_aimTargetPoint.x = shotTarget.position.x;
+					m_aimTargetPoint.y = shotTarget.position.y;
 					break;
 				}
 			}
