@@ -436,11 +436,11 @@ void Game::render()
 	//SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	//SDL_RenderClear(m_renderer);
 
-	//for (ConvexShape& shape : m_shapeSpawner)
-	//{
-	//	shape.render(m_renderer);
-	//}
-	//m_groundConvexShape.render(m_renderer);
+	/*for (ConvexShape& shape : m_shapeSpawner)
+	{
+		shape.render(m_renderer);
+	}
+	m_groundConvexShape.render(m_renderer);*/
 
 
 	SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);

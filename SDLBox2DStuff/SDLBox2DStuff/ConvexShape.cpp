@@ -32,7 +32,6 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	//setShape();
 	m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
 
-
 	if (m_data.type == Type::BULLET)
 	{
 		m_b2Body->SetBullet(true);
@@ -94,7 +93,7 @@ void ConvexShape::render(SDL_Renderer* renderer)
 {
 	SDL_SetRenderDrawColor(renderer, color().r, color().g, color().b, color().a);
 
-	renderLines(renderer);
+	//renderLines(renderer);
 }
 
 void ConvexShape::renderShadow(SDL_Renderer* renderer, Vector2f position)
