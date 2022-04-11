@@ -90,14 +90,16 @@ private:
 	// box2d setup
 	float fps{ 60.0f };
 
-	float m_simSpeed{ 1.5f };
+	float m_simSpeed{ 1.0f };
+
+	Timer m_skipStepTimer{};
 
 	b2Vec2 m_gravity{ 0.0f, 9.8f }; // fps 60: grav = 9.8f
 	b2World m_world{ m_gravity };
 
 	float m_timeStep{ 1.0f / fps };
-	int32_t m_velocityIterations{ 6 };
-	int32_t m_positionIterations{ 2 };
+	int32_t m_velocityIterations{ 2000 };
+	int32_t m_positionIterations{ 2000 };
 
 	ConvexShape m_groundConvexShape;
 	ConvexShape m_leftWallConvexShape;

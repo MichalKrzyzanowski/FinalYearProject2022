@@ -32,9 +32,14 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 	//setShape();
 	m_b2Shape.SetAsBox(m_data.width / 2.0f / SCALING_FACTOR, m_data.height / 2.0f / SCALING_FACTOR);
 
-	if (m_data.type == Type::BULLET)
+	if (m_data.type == Type::BULLET || m_data.type == Type::TARGET || m_data.type == Type::BLOCK)
 	{
 		m_b2Body->SetBullet(true);
+	}
+
+	if (m_data.type == Type::PLAYER)
+	{
+		m_b2Body->SetEnabled(false);
 	}
 
 	if (m_b2BodyDef.type != b2_staticBody)

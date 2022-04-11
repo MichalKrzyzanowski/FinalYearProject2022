@@ -75,12 +75,26 @@ void Game::run()
 {
 	m_gameIsRunning = true;
 	SDL_Event e{};
+	Timer fpsTimer{};
+	int countedFrames{};
+	fpsTimer.start();
 
 	while (m_gameIsRunning)
 	{
+		float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.0f);
+		if (avgFPS > 2000000.0f)
+		{
+			avgFPS = 0.0f;
+		}
+
+		std::string fps{ "simulation running @ " + std::to_string(avgFPS) + "fps" };
+
+		SDL_SetWindowTitle(m_window, fps.c_str());
+
 		processEvents(e);
 		update();
 		render();
+		++countedFrames;
 	}
 }
 
@@ -117,6 +131,7 @@ void Game::processEvents(SDL_Event e)
 				if (m_targetPresent && m_playerPresent)
 				{
 					m_gameState = GameState::GAMEPLAY;
+					m_skipStepTimer.restart();
 					printf("Shoot Phase\n");
 					m_phaseText = loadFromRenderedText("Simulate Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 				}
@@ -300,7 +315,7 @@ void Game::update()
 		m_showWarning = false;
 		m_showLevelSave = false;
 
-		m_world.Step(m_timeStep, m_velocityIterations, m_positionIterations);
+		m_world.Step(m_timeStep * m_simSpeed, m_velocityIterations, m_positionIterations);
 
 		if (!m_world.IsLocked())
 		{
@@ -341,6 +356,12 @@ void Game::update()
 						break;
 					}
 				}
+			}
+
+			if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+			{
+				readyToShoot = true;
+				m_skipStepTimer.restart();
 			}
 
 			if (readyToShoot)
@@ -660,12 +681,6 @@ void Game::reset()
 void Game::estimateDifficulty()
 {
 	SDL_Event e{};
-	fps = 5.0f;
-	m_gravity = b2Vec2{ 0.0f, 45.0f };
-
-	m_world.SetGravity(m_gravity);
-
-	m_timeStep = 1.0f / fps;
 
 	m_circle.position() = Vector2f{ m_player->position().x * SCALING_FACTOR, m_player->position().y * SCALING_FACTOR };
 	m_circle.setup();
@@ -738,6 +753,7 @@ void Game::estimateDifficulty()
 
 				if (shotReady)
 				{
+					m_simSpeed = 10.0f;
 					shoot(Vector2f{ shotTarget.position.x, shotTarget.position.y });
 					m_aimTargetPoint.x = shotTarget.position.x;
 					m_aimTargetPoint.y = shotTarget.position.y;
@@ -772,6 +788,11 @@ void Game::estimateDifficulty()
 				update();
 				render();
 
+				if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+				{
+					endShotSim = true;
+				}
+
 				// calculate the score of the shot
 
 				if (endShotSim)
@@ -794,6 +815,8 @@ void Game::estimateDifficulty()
 					printf("Iteration done. Score: %dpts\n\n", currentScore);
 
 					m_scores.push_back(currentScore);
+					m_simSpeed = 1.0f;
+					m_skipStepTimer.restart();
 					break;
 				}
 			}
@@ -827,14 +850,9 @@ void Game::quitEstimation()
 
 	m_gameState = GameState::EDIT;
 
+	m_simSpeed = 1.0f;
+
 	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-
-	fps = 60.0f;
-	m_gravity = b2Vec2{ 0.0f, 9.8f };
-
-	m_world.SetGravity(m_gravity);
-
-	m_timeStep = 1.0f / fps;
 }
 
 int Game::calculateDistanceScore()
