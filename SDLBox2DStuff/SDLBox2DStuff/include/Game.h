@@ -90,6 +90,8 @@ private:
 	// box2d setup
 	float fps{ 60.0f };
 
+	float m_simSpeed{ 1.5f };
+
 	b2Vec2 m_gravity{ 0.0f, 9.8f }; // fps 60: grav = 9.8f
 	b2World m_world{ m_gravity };
 

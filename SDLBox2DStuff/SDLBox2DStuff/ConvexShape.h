@@ -9,6 +9,7 @@
 enum class Type
 {
 	BLOCK,
+	WALL,
 	PLAYER,
 	TARGET,
 	BULLET
