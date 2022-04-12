@@ -49,6 +49,9 @@ Game::Game() :
 	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
+	m_levelNameString = "Level Name";
+	m_levelNameText = loadFromRenderedText(m_levelNameString.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+
 	std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
 
 	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
@@ -111,10 +114,17 @@ void Game::processEvents(SDL_Event e)
 		// checks if the escape key is pressed down
 		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
 		{
-			m_gameIsRunning = false;
+			if (m_editorState != EditorState::ENTERTEXT)
+			{
+				m_gameIsRunning = false;
+			}
+			else
+			{
+				m_editorState = EditorState::PLACE;
+			}
 		}
 
-		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE && !m_estimationMode)
+		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE && !m_estimationMode && m_editorState != EditorState::ENTERTEXT)
 		{
 			m_playSim = !m_playSim;
 
@@ -148,31 +158,32 @@ void Game::processEvents(SDL_Event e)
 		{
 			if (!m_estimationMode)
 			{
-				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_h)
-				{
-					m_showHelp = !m_showHelp;
-				}
-
 				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_s)
 				{
-					saveLevelData("level");
-
-					m_levelSaveText = loadFromRenderedText("Level Saved!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-					m_showLevelSave = true;
-					m_levelSaveTimer.restart();
+					m_editorState = EditorState::ENTERTEXT;
+					SDL_StartTextInput();
 				}
 
-				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_l)
+				if (m_editorState != EditorState::ENTERTEXT)
 				{
-					loadLevelData("level");
+					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_h)
+					{
+						m_showHelp = !m_showHelp;
+					}
 
-					m_levelSaveText = loadFromRenderedText("Level Loaded!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-					m_showLevelSave = true;
-					m_levelSaveTimer.restart();
+
+					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_l)
+					{
+						loadLevelData("level");
+
+						m_levelSaveText = loadFromRenderedText("Level Loaded!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+						m_showLevelSave = true;
+						m_levelSaveTimer.restart();
+					}
 				}
 			}
 
-			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_g)
+			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_g && m_editorState != EditorState::ENTERTEXT)
 			{
 				if (m_targetPresent && m_player)
 				{
@@ -192,11 +203,75 @@ void Game::processEvents(SDL_Event e)
 					m_warningTimer.restart();
 				}
 			}
+
+			if (m_editorState == EditorState::ENTERTEXT)
+			{
+				bool updateText{ false };
+
+				if (e.type == SDL_KEYDOWN)
+				{
+					if (e.key.keysym.sym == SDLK_BACKSPACE && m_levelNameString.length() > 0)
+					{
+						m_levelNameString.pop_back();
+						updateText = true;
+					}
+					// cut & paste functionality
+					else if (e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL)
+					{
+						SDL_SetClipboardText(m_levelNameString.c_str());
+					}
+					else if (e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL)
+					{
+						m_levelNameString = SDL_GetClipboardText();
+						updateText = true;
+					}
+				}
+				else if (e.type == SDL_TEXTINPUT)
+				{
+					if (!(SDL_GetModState() & KMOD_CTRL &&
+						(e.text.text[0] == 'c' || e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V'))
+						&& m_levelNameString.length() <= 10)
+					{
+						m_levelNameString += e.text.text;
+						updateText = true;
+					}
+				}
+
+				if (updateText)
+				{
+					if (m_levelNameString != "")
+					{
+						m_levelNameText = loadFromRenderedText(m_levelNameString.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+					}
+					else
+					{
+						m_levelNameText = loadFromRenderedText(" ", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+					}
+				}
+
+				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_RETURN)
+				{
+					if (m_targetPresent && m_player && m_levelNameString.length() > 0)
+					{
+						m_editorState = EditorState::PLACE;
+						saveLevelData(m_levelNameString);
+						SDL_StopTextInput();
+						m_levelSaveText = loadFromRenderedText("Level Saved!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+						m_levelNameString = "Level Name";
+						m_showLevelSave = true;
+						m_levelSaveTimer.restart();
+					}
+					else
+					{
+						m_showWarning = true;
+						m_warningTimer.restart();
+					}
+				}
+			}
 		}
 
 		processMouseEvents(e);
 	}
-
 }
 
 void Game::processMouseEvents(SDL_Event e)
@@ -479,6 +554,13 @@ void Game::render()
 		SDL_SetRenderDrawColor(m_renderer, 128, 128, 128, 128);
 		SDL_RenderFillRectF(m_renderer, &m_toolbarBg);
 
+		if (m_editorState == EditorState::ENTERTEXT)
+		{
+			SDL_RenderFillRectF(m_renderer, &m_saveDialogBox);
+			SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+			renderText(m_renderer, &m_levelNameText, Vector2f{ m_saveDialogBox.x + 10.0f, m_saveDialogBox.y + 10.0f });
+		}
+
 		SDL_SetRenderDrawColor(m_renderer, 0x00, 0x00, 0x00, 0xFF);
 		m_rectButton.render(m_renderer);
 		m_squareButton.render(m_renderer);
@@ -550,7 +632,7 @@ void Game::saveLevelData(const std::string& fileName)
 {
 	printf("Saving level data to file\n");
 
-	std::ofstream levelData(fileName + ".txt");
+	std::ofstream levelData("levels/" + fileName + ".txt");
 
 	levelData << m_shapeData.size() << "\n";
 
@@ -984,7 +1066,7 @@ void Game::shoot(Vector2f targetPosition)
 	b2Vec2 unit{ targetPosition.x - m_player->position().x * SCALING_FACTOR, targetPosition.y - m_player->position().y * SCALING_FACTOR };
 	unit.Normalize();
 	m_shapeSpawner.emplace_back(&m_world, Vector2f{ (m_player->position().x + unit.x / 4) * SCALING_FACTOR,
-		(m_player->position().y + unit.y / 4)* SCALING_FACTOR }, 15, 15, b2_dynamicBody, Type::BULLET, SDL_Color{255, 0, 0, 255});
+		(m_player->position().y + unit.y / 4) * SCALING_FACTOR }, 15, 15, b2_dynamicBody, Type::BULLET, SDL_Color{ 255, 0, 0, 255 });
 
 	m_currentBullet = &m_shapeSpawner.back();
 	m_shapeSpawner.back().launch(unit, m_power);

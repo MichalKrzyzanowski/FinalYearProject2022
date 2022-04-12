@@ -1,3 +1,6 @@
+#ifndef GAME_H
+#define GAME_H
+
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <SDL_image.h>
@@ -25,6 +28,14 @@ enum class GameState
 	GAMEPLAY,
 	WIN,
 	LOSE
+};
+
+enum class EditorState
+{
+	PLACE,
+	EDIT,
+	DELETE,
+	ENTERTEXT
 };
 
 class Game
@@ -107,6 +118,7 @@ private:
 	ConvexShape m_roofConvexShape;
 
 	GameState m_gameState = GameState::EDIT;
+	EditorState m_editorState = EditorState::PLACE;
 
 	// shot variables
 	const Uint8* state = SDL_GetKeyboardState(nullptr);
@@ -176,4 +188,11 @@ private:
 	SDL_FRect m_playerSelect{ m_playerButton.position().x + 15.0f,
 									m_playerButton.position().y + 15.0f,
 										10, 10 };
+
+	// saving UI
+	SDL_FRect m_saveDialogBox { 10.0f, 50.0f, 120.0f, 30.0f};
+	std::string m_levelNameString;
+	LTexture m_levelNameText;
 };
+
+#endif // !GAME_H

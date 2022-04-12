@@ -135,6 +135,5 @@ inline int getNumberFromString(std::string str)
 	return atoi(str.c_str());
 }
 
-
 #endif // !UTILITY_H
 
