@@ -127,6 +127,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,6 +144,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,6 +158,7 @@
     <ClCompile Include="Button.cpp" />
     <ClCompile Include="Circle.cpp" />
     <ClCompile Include="ConvexShape.cpp" />
+    <ClCompile Include="LevelList.cpp" />
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="SDLDraw.cpp" />
     <ClCompile Include="src\Game.cpp" />
@@ -168,6 +171,7 @@
     <ClInclude Include="ConvexShapeContactListener.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Timer.h" />
+    <ClInclude Include="LevelList.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Button.h" />
     <ClInclude Include="SDLDraw.h" />

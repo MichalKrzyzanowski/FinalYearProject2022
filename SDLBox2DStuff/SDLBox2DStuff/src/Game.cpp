@@ -66,6 +66,8 @@ Game::Game() :
 	m_helpText.texture = SDL_CreateTextureFromSurface(m_renderer,
 		TTF_RenderText_Blended_Wrapped(m_fontNormal, "H:    Toggle Help\nG:    Run Difficulty Estimation\nS:    Save Level\nL:    Load Level\nSpacebar:    Toggle Edit/Play Mode",
 			SDL_Color{ 0, 0, 0, 255 }, 400));
+
+	LevelList::updateList();
 }
 
 Game::~Game()
@@ -114,17 +116,20 @@ void Game::processEvents(SDL_Event e)
 		// checks if the escape key is pressed down
 		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
 		{
-			if (m_editorState != EditorState::ENTERTEXT)
+			if (m_editorState != EditorState::ENTERTEXT
+				&& m_editorState != EditorState::LOADLEVEL)
 			{
 				m_gameIsRunning = false;
 			}
 			else
 			{
 				m_editorState = EditorState::PLACE;
+				m_loadLevelListY = 100.0f;
 			}
 		}
 
-		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE && !m_estimationMode && m_editorState != EditorState::ENTERTEXT)
+		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE && !m_estimationMode && m_editorState != EditorState::ENTERTEXT
+			&& m_editorState != EditorState::LOADLEVEL)
 		{
 			m_playSim = !m_playSim;
 
@@ -174,11 +179,7 @@ void Game::processEvents(SDL_Event e)
 
 					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_l)
 					{
-						loadLevelData("level");
-
-						m_levelSaveText = loadFromRenderedText("Level Loaded!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-						m_showLevelSave = true;
-						m_levelSaveTimer.restart();
+						m_editorState = EditorState::LOADLEVEL;
 					}
 				}
 			}
@@ -191,9 +192,9 @@ void Game::processEvents(SDL_Event e)
 					m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
 					m_estimationMode = true;
-					saveLevelData("level");
+					saveLevelData("temp-level");
 					estimateDifficulty();
-					loadLevelData("level");
+					loadLevelData("temp-level");
 					m_estimationMode = false;
 				}
 				else
@@ -201,6 +202,22 @@ void Game::processEvents(SDL_Event e)
 					m_playSim = !m_playSim;
 					m_showWarning = true;
 					m_warningTimer.restart();
+				}
+			}
+			if (m_editorState == EditorState::LOADLEVEL)
+			{
+				if (e.type == SDL_MOUSEWHEEL)
+				{
+					// scrolled up
+					if (e.wheel.y > 0)
+					{
+						m_loadLevelListY -= m_scrollIncrement;
+					}
+					// scrolled down
+					else if (e.wheel.y < 0)
+					{
+						m_loadLevelListY += m_scrollIncrement;
+					}
 				}
 			}
 
@@ -257,7 +274,7 @@ void Game::processEvents(SDL_Event e)
 						saveLevelData(m_levelNameString);
 						SDL_StopTextInput();
 						m_levelSaveText = loadFromRenderedText("Level Saved!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-						m_levelNameString = "Level Name";
+						LevelList::updateList();
 						m_showLevelSave = true;
 						m_levelSaveTimer.restart();
 					}
@@ -284,7 +301,8 @@ void Game::processMouseEvents(SDL_Event e)
 		m_aimTargetPoint.y = static_cast<float>(y);
 	}
 
-	if (m_gameState == GameState::EDIT && y < m_toolbarBg.y)
+	if (m_gameState == GameState::EDIT && y < m_toolbarBg.y && m_editorState != EditorState::ENTERTEXT
+		&& m_editorState != EditorState::LOADLEVEL)
 	{
 		// if the left mouse button is pressed down
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
@@ -335,6 +353,7 @@ void Game::processMouseEvents(SDL_Event e)
 			{
 				m_currentShape = &m_squarePrefab;
 				m_selectedButton = &m_squareButton;
+				m_editorState = EditorState::PLACE;
 			}
 		}
 		else if ((x >= m_rectButton.position().x && x <= m_rectButton.position().x + m_rectButton.width()) &&
@@ -344,6 +363,7 @@ void Game::processMouseEvents(SDL_Event e)
 			{
 				m_currentShape = &m_rectanglePrefab;
 				m_selectedButton = &m_rectButton;
+				m_editorState = EditorState::PLACE;
 			}
 		}
 		else if ((x >= m_targetButton.position().x && x <= m_targetButton.position().x + m_targetButton.width()) &&
@@ -353,6 +373,7 @@ void Game::processMouseEvents(SDL_Event e)
 			{
 				m_currentShape = &m_targetPrefab;
 				m_selectedButton = &m_targetButton;
+				m_editorState = EditorState::PLACE;
 			}
 		}
 		else if ((x >= m_playerButton.position().x && x <= m_playerButton.position().x + m_playerButton.width()) &&
@@ -362,6 +383,47 @@ void Game::processMouseEvents(SDL_Event e)
 			{
 				m_currentShape = &m_playerPrefab;
 				m_selectedButton = &m_playerButton;
+				m_editorState = EditorState::PLACE;
+			}
+		}
+	}
+
+	if (m_editorState == EditorState::LOADLEVEL)
+	{
+		int row{}, col{};
+		float x{ 100.0f };
+		float gap{ 5 };
+
+		for (int i{}; i < LevelList::levels().size(); ++i)
+		{
+			m_levelDialogBox.x = (m_levelDialogBox.w + gap) * row + x;
+			m_levelDialogBox.y = (m_levelDialogBox.h + gap) * col + m_loadLevelListY;
+			std::string levelName = LevelList::levels().at(i).erase(LevelList::levels().at(i).length() - 4);
+
+			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
+			{
+				if (m_aimTargetPoint.x <= m_levelDialogBox.x + m_levelDialogBox.w
+					&& m_aimTargetPoint.x >= m_levelDialogBox.x
+					&& m_aimTargetPoint.y <= m_levelDialogBox.y + m_levelDialogBox.h
+					&& m_aimTargetPoint.y >= m_levelDialogBox.y)
+				{
+					printf("Clicked on Level: %s\n", levelName.c_str());
+
+					loadLevelData(levelName);
+
+					m_editorState = EditorState::PLACE;
+					m_loadLevelListY = 100.0f;
+					m_levelSaveText = loadFromRenderedText("Level Loaded!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+					m_showLevelSave = true;
+					m_levelSaveTimer.restart();
+				}
+			}
+
+			row++;
+			if (row > 2)
+			{
+				row = 0;
+				col++;
 			}
 		}
 	}
@@ -379,6 +441,7 @@ void Game::processMouseEvents(SDL_Event e)
 			m_phaseText = loadFromRenderedText("Simulate Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 			m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 			printf("Simulate Phase\n");
+			m_skipStepTimer.restart();
 		}
 	}
 }
@@ -546,7 +609,7 @@ void Game::render()
 
 	if (m_gameState == GameState::EDIT)
 	{
-		if (y < m_toolbarBg.y && m_currentShape)
+		if (y < m_toolbarBg.y && m_currentShape && m_editorState == EditorState::PLACE)
 		{
 			m_currentShape->renderShadow(m_renderer, Vector2f{ static_cast<float>(x), static_cast<float>(y) });
 		}
@@ -559,6 +622,11 @@ void Game::render()
 			SDL_RenderFillRectF(m_renderer, &m_saveDialogBox);
 			SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
 			renderText(m_renderer, &m_levelNameText, Vector2f{ m_saveDialogBox.x + 10.0f, m_saveDialogBox.y + 10.0f });
+		}
+
+		else if (m_editorState == EditorState::LOADLEVEL)
+		{
+			renderLevelSelect();
 		}
 
 		SDL_SetRenderDrawColor(m_renderer, 0x00, 0x00, 0x00, 0xFF);
@@ -628,6 +696,33 @@ void Game::render()
 	SDL_RenderPresent(m_renderer);
 }
 
+void Game::renderLevelSelect()
+{
+	int row{}, col{};
+	float x{ 100.0f };
+	float gap{ 5 };
+
+	for (int i{}; i < LevelList::levels().size(); ++i)
+	{
+		m_levelDialogBox.x = (m_levelDialogBox.w + gap) * row + x;
+		m_levelDialogBox.y = (m_levelDialogBox.h + gap) * col + m_loadLevelListY;
+		std::string levelName = LevelList::levels().at(i).erase(LevelList::levels().at(i).length() - 4);
+
+		m_loadLevelNameText = loadFromRenderedText(levelName.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+		SDL_SetRenderDrawColor(m_renderer, 128, 128, 128, 128);
+		SDL_RenderFillRectF(m_renderer, &m_levelDialogBox);
+		SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+		renderText(m_renderer, &m_loadLevelNameText, Vector2f{ m_levelDialogBox.x + 10.0f, m_levelDialogBox.y + 10.0f });
+
+		row++;
+		if (row > 2)
+		{
+			row = 0;
+			col++;
+		}
+	}
+}
+
 void Game::saveLevelData(const std::string& fileName)
 {
 	printf("Saving level data to file\n");
@@ -665,7 +760,7 @@ void Game::loadLevelData(const std::string& fileName)
 
 	double shapeAmt{};
 	std::string temp{};
-	std::ifstream levelData(fileName + ".txt");
+	std::ifstream levelData("levels/" + fileName + ".txt");
 
 	std::getline(levelData, temp);
 

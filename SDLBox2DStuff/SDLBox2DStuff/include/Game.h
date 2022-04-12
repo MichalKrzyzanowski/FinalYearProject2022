@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <box2d.h>
 #include <fstream>
+#include <filesystem>
 #include "Rect.h"
 #include "ConvexShape.h"
 #include "Utility.h"
@@ -18,6 +19,7 @@
 #include "Button.h"
 #include "ConvexShapeContactListener.h"
 #include "SDLDraw.h"
+#include "LevelList.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -35,7 +37,8 @@ enum class EditorState
 	PLACE,
 	EDIT,
 	DELETE,
-	ENTERTEXT
+	ENTERTEXT,
+	LOADLEVEL
 };
 
 class Game
@@ -51,6 +54,7 @@ private:
 	void processMouseEvents(SDL_Event e);
 	void update();
 	void render();
+	void renderLevelSelect();
 
 	void saveLevelData(const std::string& fileName);
 	void loadLevelData(const std::string& fileName);
@@ -193,6 +197,12 @@ private:
 	SDL_FRect m_saveDialogBox { 10.0f, 50.0f, 120.0f, 30.0f};
 	std::string m_levelNameString;
 	LTexture m_levelNameText;
+
+	// loading UI
+	SDL_FRect m_levelDialogBox{ 10.0f, 50.0f, 120.0f, 30.0f };
+	LTexture m_loadLevelNameText;
+	float m_loadLevelListY{ 100.0f };
+	float m_scrollIncrement{ 10.0f };
 };
 
 #endif // !GAME_H
