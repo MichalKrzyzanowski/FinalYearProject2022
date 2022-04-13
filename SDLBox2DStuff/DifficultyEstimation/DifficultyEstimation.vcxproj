@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{d0136202-0269-4b83-9660-58e6b172f8ca}</ProjectGuid>
-    <RootNamespace>SDLBox2DStuff</RootNamespace>
+    <ProjectGuid>{a7ec8cc0-adcf-4b32-b4ca-a599ffc4b304}</ProjectGuid>
+    <RootNamespace>DifficultyEstimation</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -43,14 +43,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -82,8 +82,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(BOX2D_SDK)/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK)/include;$(BOX2D_SDK)/include/box2d;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(SDL_SDK)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOX2D_SDK)/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK)/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(SDL_SDK)/lib/x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -132,7 +132,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2d.lib;box2D.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,27 +155,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Button.cpp" />
-    <ClCompile Include="Circle.cpp" />
-    <ClCompile Include="ConvexShape.cpp" />
-    <ClCompile Include="LevelList.cpp" />
-    <ClCompile Include="Rect.cpp" />
-    <ClCompile Include="SDLDraw.cpp" />
+    <ClCompile Include="..\SDLBox2DStuff\Circle.cpp" />
+    <ClCompile Include="..\SDLBox2DStuff\ConvexShape.cpp" />
+    <ClCompile Include="..\SDLBox2DStuff\SDLDraw.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Circle.h" />
-    <ClInclude Include="ConvexShape.h" />
-    <ClInclude Include="ConvexShapeContactListener.h" />
+    <ClInclude Include="..\SDLBox2DStuff\Circle.h" />
+    <ClInclude Include="..\SDLBox2DStuff\ConvexShape.h" />
+    <ClInclude Include="..\SDLBox2DStuff\ConvexShapeContactListener.h" />
+    <ClInclude Include="..\SDLBox2DStuff\SDLDraw.h" />
+    <ClInclude Include="..\SDLBox2DStuff\Utility.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Timer.h" />
-    <ClInclude Include="LevelList.h" />
-    <ClInclude Include="Rect.h" />
-    <ClInclude Include="Button.h" />
-    <ClInclude Include="SDLDraw.h" />
-    <ClInclude Include="Utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

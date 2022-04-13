@@ -184,18 +184,28 @@ void Game::processEvents(SDL_Event e)
 				}
 			}
 
-			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_g && m_editorState != EditorState::ENTERTEXT)
+			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_g && m_editorState != EditorState::ENTERTEXT
+				&& m_editorState != EditorState::LOADLEVEL)	
 			{
 				if (m_targetPresent && m_player)
 				{
-					printf("Difficulty Simulation Phase\n");
+					saveLevelData("temp-level");
+					if (ShellExecute(NULL, "open", "..\\x64\\Debug\\DifficultyEstimation.exe temp-level", NULL, NULL, SW_SHOWDEFAULT))
+					{
+						printf("Shell Worked\n");
+					}
+					else
+					{
+						printf("Shell failed\n");
+					}
+					/*printf("Difficulty Simulation Phase\n");
 					m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
 					m_estimationMode = true;
 					saveLevelData("temp-level");
 					estimateDifficulty();
 					loadLevelData("temp-level");
-					m_estimationMode = false;
+					m_estimationMode = false;*/
 				}
 				else
 				{
@@ -408,7 +418,6 @@ void Game::processMouseEvents(SDL_Event e)
 					&& m_aimTargetPoint.y >= m_levelDialogBox.y)
 				{
 					printf("Clicked on Level: %s\n", levelName.c_str());
-
 					loadLevelData(levelName);
 
 					m_editorState = EditorState::PLACE;
@@ -614,6 +623,12 @@ void Game::render()
 			m_currentShape->renderShadow(m_renderer, Vector2f{ static_cast<float>(x), static_cast<float>(y) });
 		}
 
+		if (m_showHelp)
+		{
+			SDL_FRect helpRect{ SCREEN_WIDTH - 250, SCREEN_HEIGHT - m_toolbarBg.h - 110, 250, 100 };
+			SDL_RenderCopyF(m_renderer, m_helpText.texture, NULL, &helpRect);
+		}
+
 		SDL_SetRenderDrawColor(m_renderer, 128, 128, 128, 128);
 		SDL_RenderFillRectF(m_renderer, &m_toolbarBg);
 
@@ -637,12 +652,6 @@ void Game::render()
 
 		SDL_RenderFillRectF(m_renderer, &m_squareShapeSelect);
 		SDL_RenderFillRectF(m_renderer, &m_rectangleShapeSelect);
-
-		if (m_showHelp)
-		{
-			SDL_FRect helpRect{ SCREEN_WIDTH - 250, SCREEN_HEIGHT - m_toolbarBg.h - 110, 250, 100 };
-			SDL_RenderCopyF(m_renderer, m_helpText.texture, NULL, &helpRect);
-		}
 
 		renderText(m_renderer, &m_squareText, Vector2f{ m_squareButton.position().x - m_squareButton.width() / 4,
 										m_squareButton.position().y + 45.0f, });
@@ -920,7 +929,7 @@ void Game::estimateDifficulty()
 				{
 					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
 					{
-						quitEstimation();
+						quit();
 						return;
 					}
 				}
@@ -957,7 +966,7 @@ void Game::estimateDifficulty()
 				{
 					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
 					{
-						quitEstimation();
+						quit();
 						return;
 					}
 				}
@@ -1014,10 +1023,10 @@ void Game::estimateDifficulty()
 
 	printf("Estimation Complete!\n Difficulty Rating: %d/10\n\n", evaluateDifficulty(bestScore));
 
-	quitEstimation();
+	quit();
 }
 
-void Game::quitEstimation()
+void Game::quit()
 {
 	m_power = 400.0f; // resets power to default
 

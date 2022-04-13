@@ -20,6 +20,7 @@
 #include "ConvexShapeContactListener.h"
 #include "SDLDraw.h"
 #include "LevelList.h"
+#include <Windows.h>
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -36,7 +37,7 @@ enum class EditorState
 {
 	PLACE,
 	EDIT,
-	DELETE,
+	REMOVE,
 	ENTERTEXT,
 	LOADLEVEL
 };
@@ -63,7 +64,7 @@ private:
 	void reset();
 
 	void estimateDifficulty();
-	void quitEstimation();
+	void quit();
 	int calculateDistanceScore();
 	int distanceScoreEvaluation(int shortestDistance);
 	int evaluateDifficulty(int bestScore);
