@@ -11,11 +11,11 @@
 *.userprefs
 
 # Build results
-[Dd]ebug/
+DifficultyEstimation/x64/
+SDLBox2DStuff/x64/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
-x64/
 x86/
 bld/
 [Bb]in/
