@@ -10,6 +10,7 @@
 #include <box2d.h>
 #include <fstream>
 #include <filesystem>
+#include <Windows.h>
 #include "../SDLBox2DStuff/ConvexShape.h"
 #include "../SDLBox2DStuff/Utility.h"
 #include "Timer.h"

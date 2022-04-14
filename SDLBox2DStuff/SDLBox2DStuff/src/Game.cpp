@@ -190,14 +190,7 @@ void Game::processEvents(SDL_Event e)
 				if (m_targetPresent && m_player)
 				{
 					saveLevelData("temp-level");
-					if (ShellExecute(NULL, "open", "..\\x64\\Debug\\DifficultyEstimation.exe temp-level", NULL, NULL, SW_SHOWDEFAULT))
-					{
-						printf("Shell Worked\n");
-					}
-					else
-					{
-						printf("Shell failed\n");
-					}
+					system("DifficultyEstimation.exe temp-level");
 					/*printf("Difficulty Simulation Phase\n");
 					m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 

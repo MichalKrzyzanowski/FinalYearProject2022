@@ -1,7 +1,7 @@
 #include "../include/Game.h"
 
 Game::Game(int mainArgsCount, char** mainArgs) :
-	m_gameIsRunning{ false },
+	m_gameIsRunning{ true },
 	m_groundConvexShape{ &m_world, Vector2f{-1, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH + 2, 100, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
 	m_leftWallConvexShape{ &m_world, Vector2f{SCREEN_WIDTH, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
 	m_rightWallConvexShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
@@ -78,6 +78,7 @@ Game::Game(int mainArgsCount, char** mainArgs) :
 
 	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 	
+	ShowWindow(GetConsoleWindow(), SW_HIDE);
 	estimateDifficulty();
 }
 
@@ -89,7 +90,6 @@ Game::~Game()
 
 void Game::run()
 {
-	m_gameIsRunning = true;
 	SDL_Event e{};
 	Timer fpsTimer{};
 	int countedFrames{};
@@ -324,7 +324,6 @@ void Game::reset()
 void Game::estimateDifficulty()
 {
 	SDL_Event e{};
-	printf("in estimation\n");
 	loadLevelData("temp-level");
 
 	m_circle.position() = Vector2f{ m_player->position().x * SCALING_FACTOR, m_player->position().y * SCALING_FACTOR };
@@ -394,8 +393,14 @@ void Game::estimateDifficulty()
 				update();
 				render();
 
+				if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+				{
+					shotReady = true;
+				}
+
 				if (shotReady)
 				{
+					m_skipStepTimer.restart();
 					m_simSpeed = 10.0f;
 					shoot(Vector2f{ shotTarget.position.x, shotTarget.position.y });
 					m_aimTargetPoint.x = shotTarget.position.x;
@@ -490,6 +495,7 @@ void Game::estimateDifficulty()
 
 void Game::quit()
 {
+	ShowWindow(GetConsoleWindow(), SW_SHOW);
 	m_gameIsRunning = false;
 }
 
