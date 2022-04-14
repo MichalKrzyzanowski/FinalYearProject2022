@@ -106,7 +106,7 @@ private:
 
 	Circle m_circle;
 
-	bool m_targetPresent{ false };
+	int m_targetCount{ 0 };
 
 	std::vector<ConvexShape> m_shapeSpawner{};
 	std::vector<ShapeData> m_shapeData{};

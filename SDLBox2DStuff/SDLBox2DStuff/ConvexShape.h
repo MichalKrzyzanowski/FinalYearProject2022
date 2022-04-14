@@ -24,6 +24,7 @@ struct ShapeData
 	b2BodyType b2BodyType;
 	int width;
 	int height;
+	float angle;
 };
 
 class ConvexShape
@@ -57,7 +58,8 @@ public:
 		float height,
 		b2BodyType b2Type,
 		Type type = Type::BLOCK,
-		SDL_Color color = SDL_Color{ 0, 0, 0, 255 });
+		SDL_Color color = SDL_Color{ 0, 0, 0, 255 },
+		float angle = 0.0f);
 	~ConvexShape();
 
 	void update();

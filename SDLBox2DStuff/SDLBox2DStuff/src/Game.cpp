@@ -1,5 +1,7 @@
 #include "../include/Game.h"
 
+int runEstimation(void* data);
+
 Game::Game() :
 	m_gameIsRunning{ false },
 	m_groundConvexShape{ &m_world, Vector2f{-1, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH + 2, 100, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
@@ -143,7 +145,7 @@ void Game::processEvents(SDL_Event e)
 			}
 			else
 			{
-				if (m_targetPresent && m_playerPresent)
+				if (m_targetCount > 0 && m_playerPresent)
 				{
 					m_gameState = GameState::GAMEPLAY;
 					m_skipStepTimer.restart();
@@ -185,20 +187,14 @@ void Game::processEvents(SDL_Event e)
 			}
 
 			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_g && m_editorState != EditorState::ENTERTEXT
-				&& m_editorState != EditorState::LOADLEVEL)	
+				&& m_editorState != EditorState::LOADLEVEL)
 			{
-				if (m_targetPresent && m_player)
+				if (m_targetCount > 0 && m_player)
 				{
 					saveLevelData("temp-level");
-					system("DifficultyEstimation.exe temp-level");
-					/*printf("Difficulty Simulation Phase\n");
-					m_phaseText = loadFromRenderedText("Difficulty Simulation Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
-					m_estimationMode = true;
-					saveLevelData("temp-level");
-					estimateDifficulty();
-					loadLevelData("temp-level");
-					m_estimationMode = false;*/
+					// run thread here
+					m_threads.push_back(SDL_CreateThread(runEstimation, "Estimation Thread", (void*)NULL));
 				}
 				else
 				{
@@ -271,7 +267,7 @@ void Game::processEvents(SDL_Event e)
 
 				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_RETURN)
 				{
-					if (m_targetPresent && m_player && m_levelNameString.length() > 0)
+					if (m_targetCount > 0 && m_player && m_levelNameString.length() > 0)
 					{
 						m_editorState = EditorState::PLACE;
 						saveLevelData(m_levelNameString);
@@ -328,21 +324,19 @@ void Game::processMouseEvents(SDL_Event e)
 			}
 			else if (m_currentShape->type() != Type::PLAYER)
 			{
-				m_shapeSpawner.emplace_back(&m_world,
-					Vector2f{ static_cast<float>(x), static_cast<float>(y) },
-					m_currentShape->width(),
-					m_currentShape->height(),
-					m_currentShape->b2BodyDefType(),
-					m_currentShape->type(),
-					m_currentShape->color());
-
-
-				storeShapeData(m_shapeSpawner.back().data());
-
-
-				if (m_currentShape->type() == Type::TARGET)
+				if (m_currentShape->type() == Type::TARGET && m_targetCount < 3)
 				{
-					m_targetPresent = true;
+					m_shapeSpawner.emplace_back(&m_world,
+						Vector2f{ static_cast<float>(x), static_cast<float>(y) },
+						m_currentShape->width(),
+						m_currentShape->height(),
+						m_currentShape->b2BodyDefType(),
+						m_currentShape->type(),
+						m_currentShape->color());
+
+
+					storeShapeData(m_shapeSpawner.back().data());
+					++m_targetCount;
 				}
 			}
 		}
@@ -745,6 +739,7 @@ void Game::saveLevelData(const std::string& fileName)
 		levelData << data.width << "\n";
 		levelData << static_cast<int>(data.type) << "\n";
 		levelData << static_cast<int>(data.b2BodyType) << "\n";
+		levelData << data.angle << "\n";
 	}
 
 	levelData.close();
@@ -807,6 +802,11 @@ void Game::loadLevelData(const std::string& fileName)
 
 		tempData.b2BodyType = static_cast<b2BodyType>(std::stoi(temp));
 
+		// get angle data
+		std::getline(levelData, temp);
+
+		tempData.angle = std::stof(temp);
+
 		// add the temp data to the data vector
 		storeShapeData(tempData);
 	}
@@ -821,17 +821,14 @@ void Game::storeShapeData(ShapeData shapeData)
 
 void Game::reset()
 {
-	if (!m_estimationMode)
-	{
-		m_bulletsCount = m_TOTAL_BULLETS;
-		std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
+	m_bulletsCount = m_TOTAL_BULLETS;
+	std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
 
-		m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-	}
+	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
 	m_shapeSpawner.clear();
 	m_playerPresent = false;
-	m_targetPresent = false;
+	m_targetCount = 0;
 	m_player = nullptr;
 
 	for (ShapeData& data : m_shapeData)
@@ -842,7 +839,8 @@ void Game::reset()
 			data.height,
 			data.b2BodyType,
 			data.type,
-			data.color);
+			data.color,
+			data.angle);
 
 		if (data.type == Type::PLAYER)
 		{
@@ -852,281 +850,17 @@ void Game::reset()
 
 		else if (data.type == Type::TARGET)
 		{
-			m_targetPresent = true;
+			m_targetCount++;
 		}
 	}
 }
 
-void Game::estimateDifficulty()
+int runEstimation(void* data)
 {
-	SDL_Event e{};
-
-	m_circle.position() = Vector2f{ m_player->position().x * SCALING_FACTOR, m_player->position().y * SCALING_FACTOR };
-	m_circle.setup();
-
-	m_power = m_MIN_POWER;
-
-	m_gameState = GameState::GAMEPLAY;
-
-	int powerStep{ 1 };
-	int angleIncrement{ 45 };
-
-	int bulletCount{ 3 };
-
-	std::vector<int> m_scores{};
-	m_scores.reserve(5000);
-
-	// loop through each power level
-	for (; m_power < m_MAX_POWER; m_power += ((m_MAX_POWER - m_MIN_POWER) / 4))
-	{
-		printf("Setting Power\n");
-
-		if (m_power >= m_MAX_POWER)
-		{
-			m_power = m_MAX_POWER;
-		}
-
-		std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
-
-		m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-
-		SDL_Vertex shotTarget{};
-
-		shotTarget.position = SDL_FPoint{ (m_player->position().x * SCALING_FACTOR) + 30.0f, (m_player->position().y * SCALING_FACTOR) };
-
-		// loop through a 360 degree circle
-		for (int j{}; j < 360; j += angleIncrement)
-		{
-			rotatePoint((m_player->position().x * SCALING_FACTOR), (m_player->position().y * SCALING_FACTOR), Deg2Rad(angleIncrement), shotTarget.position);
-
-			int currentScore{ 0 };
-
-			printf("Starting circle loop\n");
-			reset();
-
-			// prepares the level for a shot 
-			while (true)
-			{
-				bool shotReady{ true };
-
-				for (ConvexShape& shape : m_shapeSpawner)
-				{
-					if (shape.awake())
-					{
-						shotReady = false;
-						break;
-					}
-				}
-
-				while (SDL_PollEvent(&e) != 0)
-				{
-					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
-					{
-						quit();
-						return;
-					}
-				}
-
-				update();
-				render();
-
-				if (shotReady)
-				{
-					m_simSpeed = 10.0f;
-					shoot(Vector2f{ shotTarget.position.x, shotTarget.position.y });
-					m_aimTargetPoint.x = shotTarget.position.x;
-					m_aimTargetPoint.y = shotTarget.position.y;
-					break;
-				}
-			}
-
-
-			// simulate the shot
-			while (true)
-			{
-				bool endShotSim{ true };
-
-				for (ConvexShape& shape : m_shapeSpawner)
-				{
-					if (shape.awake())
-					{
-						endShotSim = false;
-						break;
-					}
-				}
-
-				while (SDL_PollEvent(&e) != 0)
-				{
-					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
-					{
-						quit();
-						return;
-					}
-				}
-
-				update();
-				render();
-
-				if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
-				{
-					endShotSim = true;
-				}
-
-				// calculate the score of the shot
-
-				if (endShotSim)
-				{
-
-					// checking if any target has been hit
-					for (ConvexShape& shape : m_shapeSpawner)
-					{
-						if (shape.type() == Type::TARGET)
-						{
-							if (shape.marked())
-							{
-								currentScore += 100;
-							}
-						}
-					}
-
-					currentScore += calculateDistanceScore();
-
-					printf("Iteration done. Score: %dpts\n\n", currentScore);
-
-					m_scores.push_back(currentScore);
-					m_simSpeed = 1.0f;
-					m_skipStepTimer.restart();
-					break;
-				}
-			}
-		}
-	}
-
-	int bestScore{ m_scores.at(0) };
-
-	for (int i{ 1 }; i < m_scores.size(); ++i)
-	{
-		if (m_scores.at(i) > bestScore)
-		{
-			bestScore = m_scores.at(i);
-		}
-	}
-
-	printf("Best Score: %dpts\n\n", bestScore);
-
-	printf("Estimation Complete!\n Difficulty Rating: %d/10\n\n", evaluateDifficulty(bestScore));
-
-	quit();
-}
-
-void Game::quit()
-{
-	m_power = 400.0f; // resets power to default
-
-	std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
-
-	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-
-	m_gameState = GameState::EDIT;
-
-	m_simSpeed = 1.0f;
-
-	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-}
-
-int Game::calculateDistanceScore()
-{
-	int score{};
-	std::vector<float> distances{};
-
-	for (ConvexShape& shape : m_shapeSpawner)
-	{
-		if (shape.type() == Type::TARGET)
-		{
-			if (!shape.marked())
-			{
-				float distance = std::hypotf((m_currentBullet->position().x - shape.position().x) * SCALING_FACTOR,
-					(m_currentBullet->position().y - shape.position().y) * SCALING_FACTOR);
-
-				distances.push_back(distance);
-			}
-		}
-	}
-
-	if (!distances.empty())
-	{
-		float shortestDistance{ distances.at(0) };
-
-		for (int i{ 1 }; i < distances.size(); ++i)
-		{
-			if (distances.at(i) < shortestDistance)
-			{
-				shortestDistance = distances.at(i);
-			}
-		}
-
-		return distanceScoreEvaluation(shortestDistance);
-	}
+	system("DifficultyEstimation.exe temp-level");
+	printf("Thread finished\n");
 
 	return 0;
-}
-
-/// <summary>
-/// Function that returns a score value based on what category the shortest distance 
-/// belongs to
-/// </summary>
-/// <param name="shortestDistance">shortest distance</param>
-/// <returns>score</returns>
-int Game::distanceScoreEvaluation(int shortestDistance)
-{
-	if (shortestDistance < 200.0f && shortestDistance > 150.0f)
-	{
-		return 5;
-	}
-	else if (shortestDistance < 150.0f && shortestDistance > 100.0f)
-	{
-		return 15;
-	}
-	else if (shortestDistance < 100.0f && shortestDistance > 50.0f)
-	{
-		return 25;
-	}
-	else if (shortestDistance < 50.0f && shortestDistance > 0.0f)
-	{
-		return 50;
-	}
-
-	return 0;
-}
-
-int Game::evaluateDifficulty(int bestScore)
-{
-	int targetsLeft{ 0 };
-	int targetAmt{ 0 };
-
-	for (ConvexShape& shape : m_shapeSpawner)
-	{
-		if (shape.type() == Type::TARGET)
-		{
-			++targetAmt;
-
-			if (!shape.marked())
-			{
-				++targetsLeft;
-			}
-		}
-	}
-
-	int maxScore{ targetAmt * 100 };
-	int scoreIncrement{ maxScore / 10 };
-
-	for (int i{ 1 }; i <= 10; ++i)
-	{
-		if (bestScore > scoreIncrement * i - 1 && bestScore <= scoreIncrement * i)
-		{
-			return i;
-		}
-	}
 }
 
 void Game::cleanUp()
@@ -1152,6 +886,11 @@ void Game::cleanUp()
 	m_fontNormal = nullptr;
 	m_window = nullptr;
 	m_renderer = nullptr;
+
+	for (auto& thread : m_threads)
+	{
+		SDL_WaitThread(thread, nullptr);
+	}
 
 	TTF_Quit();
 	IMG_Quit();

@@ -12,6 +12,8 @@ Game::Game(int mainArgsCount, char** mainArgs) :
 	m_playerPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } },
 	m_circle{ Vector2f{200, 200}, 50 }
 {
+	//ShowWindow(GetConsoleWindow(), SW_HIDE);
+
 	if (mainArgsCount > 1)
 	{
 		m_levelName = mainArgs[1];
@@ -78,7 +80,6 @@ Game::Game(int mainArgsCount, char** mainArgs) :
 
 	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 	
-	ShowWindow(GetConsoleWindow(), SW_HIDE);
 	estimateDifficulty();
 }
 
@@ -279,6 +280,11 @@ void Game::loadLevelData(const std::string& fileName)
 
 		tempData.b2BodyType = static_cast<b2BodyType>(std::stoi(temp));
 
+		// get angle data
+		std::getline(levelData, temp);
+
+		tempData.angle = std::stof(temp);
+
 		// add the temp data to the data vector
 		storeShapeData(tempData);
 	}
@@ -295,7 +301,7 @@ void Game::reset()
 {
 	m_shapeSpawner.clear();
 	m_playerPresent = false;
-	m_targetPresent = false;
+	m_targetCount = 0;
 	m_player = nullptr;
 
 	for (ShapeData& data : m_shapeData)
@@ -306,7 +312,8 @@ void Game::reset()
 			data.height,
 			data.b2BodyType,
 			data.type,
-			data.color);
+			data.color,
+			data.angle);
 
 		if (data.type == Type::PLAYER)
 		{
@@ -316,7 +323,7 @@ void Game::reset()
 
 		else if (data.type == Type::TARGET)
 		{
-			m_targetPresent = true;
+			m_targetCount++;
 		}
 	}
 }
@@ -334,160 +341,177 @@ void Game::estimateDifficulty()
 	int powerStep{ 1 };
 	int angleIncrement{ 45 };
 
-	int bulletCount{ 3 };
-
 	std::vector<int> m_scores{};
 	m_scores.reserve(5000);
 
-	// loop through each power level
-	for (; m_power < m_MAX_POWER; m_power += ((m_MAX_POWER - m_MIN_POWER) / 4))
+	int scoredShots{}; // this will be used to estimate the level difficulty
+
+	// loop through the bullets
+	for (int bulletCount{ m_TOTAL_BULLETS }; bulletCount > 0; --bulletCount)
 	{
-		printf("Setting Power\n");
+		std::vector<std::vector<ShapeData>> levelData{};
+		levelData.reserve(300);
 
-		if (m_power >= m_MAX_POWER)
+		// loop through each power level
+		for (; m_power < m_MAX_POWER; m_power += ((m_MAX_POWER - m_MIN_POWER) / 4))
 		{
-			m_power = m_MAX_POWER;
-		}
+			printf("Setting Power\n");
 
-		std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
-
-		m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-
-		SDL_Vertex shotTarget{};
-
-		shotTarget.position = SDL_FPoint{ (m_player->position().x * SCALING_FACTOR) + 30.0f, (m_player->position().y * SCALING_FACTOR) };
-
-		// loop through a 360 degree circle
-		for (int j{}; j < 360; j += angleIncrement)
-		{
-			rotatePoint((m_player->position().x * SCALING_FACTOR), (m_player->position().y * SCALING_FACTOR), Deg2Rad(angleIncrement), shotTarget.position);
-
-			int currentScore{ 0 };
-
-			printf("Starting circle loop\n");
-			reset();
-
-			// prepares the level for a shot 
-			while (true)
+			if (m_power >= m_MAX_POWER)
 			{
-				bool shotReady{ true };
-
-				for (ConvexShape& shape : m_shapeSpawner)
-				{
-					if (shape.awake())
-					{
-						shotReady = false;
-						break;
-					}
-				}
-
-				while (SDL_PollEvent(&e) != 0)
-				{
-					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
-					{
-						quit();
-						return;
-					}
-				}
-
-				update();
-				render();
-
-				if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
-				{
-					shotReady = true;
-				}
-
-				if (shotReady)
-				{
-					m_skipStepTimer.restart();
-					m_simSpeed = 10.0f;
-					shoot(Vector2f{ shotTarget.position.x, shotTarget.position.y });
-					m_aimTargetPoint.x = shotTarget.position.x;
-					m_aimTargetPoint.y = shotTarget.position.y;
-					break;
-				}
+				m_power = m_MAX_POWER;
 			}
 
+			std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
 
-			// simulate the shot
-			while (true)
+			m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+
+			SDL_Vertex shotTarget{};
+
+			shotTarget.position = SDL_FPoint{ (m_player->position().x * SCALING_FACTOR) + 30.0f, (m_player->position().y * SCALING_FACTOR) };
+
+			// loop through a 360 degree circle
+			for (int j{}; j < 360; j += angleIncrement)
 			{
-				bool endShotSim{ true };
+				rotatePoint((m_player->position().x * SCALING_FACTOR), (m_player->position().y * SCALING_FACTOR), Deg2Rad(angleIncrement), shotTarget.position);
 
-				for (ConvexShape& shape : m_shapeSpawner)
+				int currentScore{ 0 };
+
+				printf("Starting circle loop\n");
+				reset();
+
+				// prepares the level for a shot 
+				while (true)
 				{
-					if (shape.awake())
-					{
-						endShotSim = false;
-						break;
-					}
-				}
+					bool shotReady{ true };
 
-				while (SDL_PollEvent(&e) != 0)
-				{
-					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
-					{
-						quit();
-						return;
-					}
-				}
-
-				update();
-				render();
-
-				if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
-				{
-					endShotSim = true;
-				}
-
-				// calculate the score of the shot
-
-				if (endShotSim)
-				{
-
-					// checking if any target has been hit
 					for (ConvexShape& shape : m_shapeSpawner)
 					{
-						if (shape.type() == Type::TARGET)
+						if (shape.awake())
 						{
-							if (shape.marked())
-							{
-								currentScore += 100;
-							}
+							shotReady = false;
+							break;
 						}
 					}
 
-					currentScore += calculateDistanceScore();
+					while (SDL_PollEvent(&e) != 0)
+					{
+						if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
+						{
+							quit();
+							return;
+						}
+					}
 
-					printf("Iteration done. Score: %dpts\n\n", currentScore);
+					update();
+					render();
 
-					m_scores.push_back(currentScore);
-					m_simSpeed = 1.0f;
-					m_skipStepTimer.restart();
-					break;
+					if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+					{
+						shotReady = true;
+					}
+
+					if (shotReady)
+					{
+						m_skipStepTimer.restart();
+						m_simSpeed = 10.0f;
+						shoot(Vector2f{ shotTarget.position.x, shotTarget.position.y });
+						m_aimTargetPoint.x = shotTarget.position.x;
+						m_aimTargetPoint.y = shotTarget.position.y;
+						break;
+					}
+				}
+
+
+				// simulate the shot
+				while (true)
+				{
+					bool endShotSim{ true };
+
+					for (ConvexShape& shape : m_shapeSpawner)
+					{
+						if (shape.awake())
+						{
+							endShotSim = false;
+							break;
+						}
+					}
+
+					while (SDL_PollEvent(&e) != 0)
+					{
+						if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_ESCAPE)
+						{
+							quit();
+							return;
+						}
+					}
+
+					update();
+					render();
+
+					if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+					{
+						endShotSim = true;
+					}
+
+					// calculate the score of the shot
+					if (endShotSim)
+					{
+						std::vector<ShapeData> tempLevelData{};
+
+						// checking if any target has been hit & storing level data
+						for (ConvexShape& shape : m_shapeSpawner)
+						{
+							tempLevelData.push_back(shape.data());
+
+							if (shape.type() == Type::TARGET)
+							{
+								if (shape.marked())
+								{
+									currentScore += 100;
+								}
+							}
+						}
+
+						currentScore += calculateDistanceScore();
+						if (currentScore > 15) scoredShots++; // will be used to determine the final difficulty rating
+						printf("Iteration done. Score: %dpts\n\n", currentScore);
+
+						m_scores.push_back(currentScore);
+						m_simSpeed = 1.0f;
+						m_skipStepTimer.restart();
+
+						// store the run end level data
+						levelData.push_back(tempLevelData);
+
+						break;
+					}
 				}
 			}
 		}
-	}
 
-	int bestScore{ m_scores.at(0) };
+		int bestScore{ m_scores.at(0) };
+		int bestScoreIndex{};
 
-	for (int i{ 1 }; i < m_scores.size(); ++i)
-	{
-		if (m_scores.at(i) > bestScore)
+		for (int i{ 1 }; i < m_scores.size(); ++i)
 		{
-			bestScore = m_scores.at(i);
+			if (m_scores.at(i) > bestScore)
+			{
+				bestScore = m_scores.at(i);
+				bestScoreIndex = i;
+			}
 		}
+
+		m_shapeData = levelData.at(bestScoreIndex);
+
+		printf("Best Score: %dpts\n\n", bestScore);
+
 	}
+	//printf("Estimation Complete!\n Difficulty Rating: %d/10\n\n", evaluateDifficulty(bestScore));
 
-	printf("Best Score: %dpts\n\n", bestScore);
+	//std::string rating = "Difficulty Rating:" + std::to_string(evaluateDifficulty(bestScore)) + "/10";
 
-	printf("Estimation Complete!\n Difficulty Rating: %d/10\n\n", evaluateDifficulty(bestScore));
-
-	std::string rating = "Difficulty Rating:" + std::to_string(evaluateDifficulty(bestScore)) + "/10";
-
-	m_phaseText = loadFromRenderedText(rating.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+	//m_phaseText = loadFromRenderedText(rating.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
 	m_state = GameState::DONE;
 	m_quitTimer.restart();

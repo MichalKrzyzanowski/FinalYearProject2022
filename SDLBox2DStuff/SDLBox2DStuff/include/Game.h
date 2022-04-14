@@ -4,6 +4,7 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <SDL_image.h>
+#include <SDL_thread.h>
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -63,17 +64,13 @@ private:
 	void storeShapeData(ShapeData shapeData);
 	void reset();
 
-	void estimateDifficulty();
-	void quit();
-	int calculateDistanceScore();
-	int distanceScoreEvaluation(int shortestDistance);
-	int evaluateDifficulty(int bestScore);
-
 	void cleanUp();
 	void shoot(Vector2f targetPosition);
 
 	bool m_gameIsRunning;
 	bool m_shootMode{ false };
+
+	std::vector<SDL_Thread*> m_threads{};
 
 	SDL_Window* m_window;
 	SDL_Renderer* m_renderer;
@@ -143,7 +140,7 @@ private:
 	Circle m_circle;
 
 	bool m_playSim{ false };
-	bool m_targetPresent{ false };
+	int m_targetCount{ 0 };
 
 	// messing around with box2d
 	int x, y;

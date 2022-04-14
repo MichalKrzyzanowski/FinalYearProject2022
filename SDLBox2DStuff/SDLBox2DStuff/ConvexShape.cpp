@@ -1,15 +1,16 @@
 #include "ConvexShape.h"
 
 
-ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, float height, b2BodyType b2Type, Type type, SDL_Color color) :
+ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition,
+	float width, float height, b2BodyType b2Type, Type type, SDL_Color color, float angle) :
 	m_world{ world }
 {
 	m_data.width = width;
 	m_data.height = height;
 	m_data.position = topLeftPosition;
-	m_data.height = height;
 	m_data.color = color;
 	m_data.type = type;
+	m_data.angle = angle;
 
 	m_marked = false;
 	m_active = true;
@@ -25,7 +26,8 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 
 	// setup initial box2d shape
 	m_data.b2BodyType = b2Type;
-	m_b2BodyDef.type = b2Type;
+	m_b2BodyDef.type = m_data.b2BodyType;
+	m_b2BodyDef.angle = m_data.angle;
 	m_b2BodyDef.position.Set((topLeftPosition.x + m_data.width / 2.0f) / SCALING_FACTOR, (topLeftPosition.y + m_data.height / 2.0f) / SCALING_FACTOR);
 	m_b2BodyDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
 	m_b2Body = m_world->CreateBody(&m_b2BodyDef);
@@ -62,7 +64,6 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition, float width, 
 
 ConvexShape::~ConvexShape()
 {
-	printf("~ConvexShape()\n");
 	m_world->DestroyBody(m_b2Body);
 }
 
