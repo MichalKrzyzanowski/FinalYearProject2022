@@ -79,7 +79,7 @@ Game::Game(int mainArgsCount, char** mainArgs) :
 	std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
 
 	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-	
+
 	estimateDifficulty();
 }
 
@@ -303,6 +303,7 @@ void Game::reset()
 	m_playerPresent = false;
 	m_targetCount = 0;
 	m_player = nullptr;
+	int id{};
 
 	for (ShapeData& data : m_shapeData)
 	{
@@ -313,7 +314,8 @@ void Game::reset()
 			data.b2BodyType,
 			data.type,
 			data.color,
-			data.angle);
+			data.angle,
+			id);
 
 		if (data.type == Type::PLAYER)
 		{
@@ -325,6 +327,8 @@ void Game::reset()
 		{
 			m_targetCount++;
 		}
+
+		id++;
 	}
 }
 
@@ -346,14 +350,48 @@ void Game::estimateDifficulty()
 
 	int scoredShots{}; // this will be used to estimate the level difficulty
 
-	// loop through the bullets
-	for (int bulletCount{ m_TOTAL_BULLETS }; bulletCount > 0; --bulletCount)
+	// track which targets are marked and the target's id
+	std::vector<std::pair<bool, int>> m_trackTargetStatus{};
+
+	bool m_allTargetsHit{ false };
+
+	for (ConvexShape& shape : m_shapeSpawner)
 	{
+		if (shape.type() == Type::TARGET)
+		{
+			std::pair<bool, int> temp{};
+			temp.first = false;
+			temp.second = shape.data().id;
+
+			m_trackTargetStatus.push_back(temp);
+		}
+	}
+
+	// loop through the bullets
+	for (int bulletCount{ m_TOTAL_BULLETS }; bulletCount > 0, !m_allTargetsHit; --bulletCount)
+	{
+		for (int i{}; i < m_trackTargetStatus.size(); ++i)
+		{
+			if (m_trackTargetStatus[i].first)
+			{
+				auto found = std::find_if(m_shapeSpawner.begin(), m_shapeSpawner.end(), [&](const auto& shape)
+					{
+						return shape.data().id == m_trackTargetStatus[i].second;
+					});
+
+				if (found._Ptr && found->type() == Type::TARGET)
+				{
+					found->marked() = true;
+					found->active() = false;
+				}
+			}
+		}
+
 		std::vector<std::vector<ShapeData>> levelData{};
 		levelData.reserve(300);
 
 		// loop through each power level
-		for (; m_power < m_MAX_POWER; m_power += ((m_MAX_POWER - m_MIN_POWER) / 4))
+		for (; m_power < m_MAX_POWER, !m_allTargetsHit; m_power += ((m_MAX_POWER - m_MIN_POWER) / 4))
 		{
 			printf("Setting Power\n");
 
@@ -371,7 +409,7 @@ void Game::estimateDifficulty()
 			shotTarget.position = SDL_FPoint{ (m_player->position().x * SCALING_FACTOR) + 30.0f, (m_player->position().y * SCALING_FACTOR) };
 
 			// loop through a 360 degree circle
-			for (int j{}; j < 360; j += angleIncrement)
+			for (int j{}; j < 360, !m_allTargetsHit; j += angleIncrement)
 			{
 				rotatePoint((m_player->position().x * SCALING_FACTOR), (m_player->position().y * SCALING_FACTOR), Deg2Rad(angleIncrement), shotTarget.position);
 
@@ -460,8 +498,16 @@ void Game::estimateDifficulty()
 						std::vector<ShapeData> tempLevelData{};
 
 						// checking if any target has been hit & storing level data
+						int targetsHit{};
+
 						for (ConvexShape& shape : m_shapeSpawner)
 						{
+							if (targetsHit >= m_targetCount)
+							{
+								m_allTargetsHit = true;
+								break;
+							}
+
 							tempLevelData.push_back(shape.data());
 
 							if (shape.type() == Type::TARGET)
@@ -469,6 +515,17 @@ void Game::estimateDifficulty()
 								if (shape.marked())
 								{
 									currentScore += 100;
+
+									for (int i{}; i < m_trackTargetStatus.size(); i++)
+									{
+										// set to true if ids match
+										if (shape.data().id == m_trackTargetStatus[i].second)
+										{
+											m_trackTargetStatus[i].first;
+											targetsHit++;
+											break;
+										}
+									}
 								}
 							}
 						}

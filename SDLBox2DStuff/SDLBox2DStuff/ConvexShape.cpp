@@ -2,7 +2,7 @@
 
 
 ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition,
-	float width, float height, b2BodyType b2Type, Type type, SDL_Color color, float angle) :
+	float width, float height, b2BodyType b2Type, Type type, SDL_Color color, float angle, int id) :
 	m_world{ world }
 {
 	m_data.width = width;
@@ -11,6 +11,7 @@ ConvexShape::ConvexShape(b2World* world, Vector2f topLeftPosition,
 	m_data.color = color;
 	m_data.type = type;
 	m_data.angle = angle;
+	m_data.id = id;
 
 	m_marked = false;
 	m_active = true;

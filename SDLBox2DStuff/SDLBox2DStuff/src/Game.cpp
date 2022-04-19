@@ -334,9 +334,21 @@ void Game::processMouseEvents(SDL_Event e)
 						m_currentShape->type(),
 						m_currentShape->color());
 
-
 					storeShapeData(m_shapeSpawner.back().data());
 					++m_targetCount;
+				}
+
+				if (m_currentShape->type() == Type::BLOCK)
+				{
+					m_shapeSpawner.emplace_back(&m_world,
+						Vector2f{ static_cast<float>(x), static_cast<float>(y) },
+						m_currentShape->width(),
+						m_currentShape->height(),
+						m_currentShape->b2BodyDefType(),
+						m_currentShape->type(),
+						m_currentShape->color());
+
+					storeShapeData(m_shapeSpawner.back().data());
 				}
 			}
 		}
@@ -830,6 +842,7 @@ void Game::reset()
 	m_playerPresent = false;
 	m_targetCount = 0;
 	m_player = nullptr;
+	int id{};
 
 	for (ShapeData& data : m_shapeData)
 	{
@@ -840,7 +853,8 @@ void Game::reset()
 			data.b2BodyType,
 			data.type,
 			data.color,
-			data.angle);
+			data.angle,
+			id);
 
 		if (data.type == Type::PLAYER)
 		{
@@ -852,6 +866,7 @@ void Game::reset()
 		{
 			m_targetCount++;
 		}
+		id++;
 	}
 }
 

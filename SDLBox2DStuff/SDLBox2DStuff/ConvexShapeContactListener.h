@@ -12,6 +12,7 @@ public:
 		ConvexShape* first = reinterpret_cast<ConvexShape*>(contact->GetFixtureA()->GetBody()->GetUserData().pointer);
 		ConvexShape* other = reinterpret_cast<ConvexShape*>(contact->GetFixtureB()->GetBody()->GetUserData().pointer);
 
+		
 
 		if (first->type() == Type::BULLET && other->type() == Type::TARGET ||
 			other->type() == Type::BULLET && first->type() == Type::TARGET)
@@ -30,7 +31,35 @@ public:
 				other->active() = false;
 			}
 		}
+	}
 
+	void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse)
+	{
+		ConvexShape* first = reinterpret_cast<ConvexShape*>(contact->GetFixtureA()->GetBody()->GetUserData().pointer);
+		ConvexShape* other = reinterpret_cast<ConvexShape*>(contact->GetFixtureB()->GetBody()->GetUserData().pointer);
+
+
+		if (first->type() == Type::BLOCK && other->type() == Type::TARGET ||
+			other->type() == Type::BLOCK && first->type() == Type::TARGET)
+		{
+			float force = impulse->normalImpulses[0] + impulse->normalImpulses[1];
+
+			if (force < 0.0f)
+			{
+				printf("Coll with block\n");
+				if (first->type() == Type::TARGET)
+				{
+					first->marked() = true;
+					first->active() = false;
+				}
+
+				else if (other->type() == Type::TARGET)
+				{
+					other->marked() = true;
+					other->active() = false;
+				}
+			}
+		}
 	}
 };
 
