@@ -9,6 +9,7 @@ Game::Game() :
 	m_rightWallConvexShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
 	m_roofConvexShape{ &m_world, Vector2f{0, -10}, SCREEN_WIDTH, 10, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
 	m_rectanglePrefab{ &m_world, Vector2f{-100, 0}, 20, 50, b2_dynamicBody },
+	m_rectangleRotatedPrefab{ &m_world, Vector2f{-100, 0}, 50, 20, b2_dynamicBody },
 	m_squarePrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody },
 	m_targetPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
 	m_playerPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } },
@@ -62,6 +63,7 @@ Game::Game() :
 
 	m_squareText = loadFromRenderedText("Square Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
 	m_rectangleText = loadFromRenderedText("Rectangle Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
+	m_rectangleRotatedText = loadFromRenderedText("Rectangle Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
 	m_targetText = loadFromRenderedText("Target Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
 	m_playerText = loadFromRenderedText("Player Block", SDL_Color{ 0, 0, 0, 255 }, m_fontTiny, m_renderer);
 
@@ -183,6 +185,11 @@ void Game::processEvents(SDL_Event e)
 					{
 						m_editorState = EditorState::LOADLEVEL;
 					}
+				}
+
+				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_c)
+				{
+					clear();
 				}
 			}
 
@@ -372,6 +379,16 @@ void Game::processMouseEvents(SDL_Event e)
 			{
 				m_currentShape = &m_rectanglePrefab;
 				m_selectedButton = &m_rectButton;
+				m_editorState = EditorState::PLACE;
+			}
+		}
+		else if ((x >= m_rectRotatedButton.position().x && x <= m_rectRotatedButton.position().x + m_rectRotatedButton.width()) &&
+			(y >= m_rectRotatedButton.position().y && y <= m_rectRotatedButton.position().y + m_rectRotatedButton.height()))
+		{
+			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
+			{
+				m_currentShape = &m_rectangleRotatedPrefab;
+				m_selectedButton = &m_rectRotatedButton;
 				m_editorState = EditorState::PLACE;
 			}
 		}
@@ -645,18 +662,23 @@ void Game::render()
 
 		SDL_SetRenderDrawColor(m_renderer, 0x00, 0x00, 0x00, 0xFF);
 		m_rectButton.render(m_renderer);
+		m_rectRotatedButton.render(m_renderer);
 		m_squareButton.render(m_renderer);
 		m_targetButton.render(m_renderer);
 		m_playerButton.render(m_renderer);
 
 		SDL_RenderFillRectF(m_renderer, &m_squareShapeSelect);
 		SDL_RenderFillRectF(m_renderer, &m_rectangleShapeSelect);
+		SDL_RenderFillRectF(m_renderer, &m_rectangleRotatedShapeSelect);
 
 		renderText(m_renderer, &m_squareText, Vector2f{ m_squareButton.position().x - m_squareButton.width() / 4,
 										m_squareButton.position().y + 45.0f, });
 
 		renderText(m_renderer, &m_rectangleText, Vector2f{ m_rectButton.position().x - m_rectButton.width() / 2,
 											m_rectButton.position().y + 45.0f, });
+		
+		renderText(m_renderer, &m_rectangleRotatedText, Vector2f{ m_rectRotatedButton.position().x - m_rectRotatedButton.width() / 2,
+											m_rectRotatedButton.position().y + 45.0f, });
 
 		renderText(m_renderer, &m_targetText, Vector2f{ m_targetButton.position().x - m_targetButton.width() / 4,
 											m_targetButton.position().y + 45.0f, });
@@ -870,6 +892,15 @@ void Game::reset()
 	}
 }
 
+void Game::clear()
+{
+	m_shapeSpawner.clear();
+	m_playerPresent = false;
+	m_targetCount = 0;
+	m_player = nullptr;
+	m_shapeData.clear();
+}
+
 int runEstimation(void* data)
 {
 	system("DifficultyEstimation.exe temp-level");
@@ -891,6 +922,9 @@ void Game::cleanUp()
 
 	SDL_DestroyTexture(m_rectangleText.texture);
 	m_rectangleText.texture = nullptr;
+	
+	SDL_DestroyTexture(m_rectangleRotatedText.texture);
+	m_rectangleRotatedText.texture = nullptr;
 
 	SDL_DestroyTexture(m_helpText.texture);
 	m_helpText.texture = nullptr;

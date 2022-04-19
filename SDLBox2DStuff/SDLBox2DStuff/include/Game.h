@@ -63,6 +63,7 @@ private:
 
 	void storeShapeData(ShapeData shapeData);
 	void reset();
+	void clear();
 
 	void cleanUp();
 	void shoot(Vector2f targetPosition);
@@ -94,6 +95,7 @@ private:
 
 
 	LTexture m_rectangleText;
+	LTexture m_rectangleRotatedText;
 	LTexture m_squareText;
 	LTexture m_targetText;
 	LTexture m_playerText;
@@ -153,6 +155,7 @@ private:
 
 
 	ConvexShape m_rectanglePrefab;
+	ConvexShape m_rectangleRotatedPrefab;
 	ConvexShape m_squarePrefab;
 	ConvexShape m_targetPrefab;
 	ConvexShape m_playerPrefab;
@@ -170,14 +173,19 @@ private:
 	SDL_FRect m_toolbarBg{ 0.0f, SCREEN_HEIGHT - 70.0f, SCREEN_WIDTH, 70.0f };
 	UI::Button m_squareButton{ Vector2f{m_toolbarBg.x + 20.0f, m_toolbarBg.y + 10.0f} };
 	UI::Button m_rectButton{ Vector2f{m_toolbarBg.x + 120.0f, m_toolbarBg.y + 10.0f} };
-	UI::Button m_targetButton{ Vector2f{m_toolbarBg.x + 220.0f, m_toolbarBg.y + 10.0f} };
-	UI::Button m_playerButton{ Vector2f{m_toolbarBg.x + 320.0f, m_toolbarBg.y + 10.0f} };
+	UI::Button m_rectRotatedButton{ Vector2f{m_toolbarBg.x + 220.0f, m_toolbarBg.y + 10.0f} };
+	UI::Button m_targetButton{ Vector2f{m_toolbarBg.x + 320.0f, m_toolbarBg.y + 10.0f} };
+	UI::Button m_playerButton{ Vector2f{m_toolbarBg.x + 420.0f, m_toolbarBg.y + 10.0f} };
 
 	UI::Button* m_selectedButton{ nullptr };
 
 	SDL_FRect m_rectangleShapeSelect{ m_rectButton.position().x + 15.0f,
 										m_rectButton.position().y + 10.0f,
 										10, 20 };
+
+	SDL_FRect m_rectangleRotatedShapeSelect{ m_rectRotatedButton.position().x + 10.0f,
+										m_rectRotatedButton.position().y + 15.0f,
+										20, 10 };
 
 	SDL_FRect m_squareShapeSelect{ m_squareButton.position().x + 15.0f,
 									m_squareButton.position().y + 15.0f,
