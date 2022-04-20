@@ -315,7 +315,8 @@ void Game::reset()
 			data.type,
 			data.color,
 			data.angle,
-			id);
+			id,
+			data.marked);
 
 		if (data.type == Type::PLAYER)
 		{
@@ -328,7 +329,21 @@ void Game::reset()
 			m_targetCount++;
 		}
 
-		id++;
+		if (data.type != Type::BULLET)
+		{
+			id++;
+		}
+	}
+}
+
+void Game::updateShapeData(std::vector<ShapeData>& dataVec)
+{
+	for (int i{}; i < m_shapeSpawner.size(); ++i)
+	{
+		dataVec.at(i).position.x = m_shapeSpawner.at(i).position().x;
+		dataVec.at(i).position.y = m_shapeSpawner.at(i).position().y;
+		dataVec.at(i).angle = m_shapeSpawner.at(i).angle();
+		dataVec.at(i).marked = m_shapeSpawner.at(i).marked();
 	}
 }
 
@@ -350,31 +365,16 @@ void Game::estimateDifficulty()
 
 	int scoredShots{}; // this will be used to estimate the level difficulty
 
-	// track which targets are marked and the target's id
-	std::vector<std::pair<bool, int>> m_trackTargetStatus{};
-
 	bool m_allTargetsHit{ false };
-
-	for (ConvexShape& shape : m_shapeSpawner)
-	{
-		if (shape.type() == Type::TARGET)
-		{
-			std::pair<bool, int> temp{};
-			temp.first = false;
-			temp.second = shape.data().id;
-
-			m_trackTargetStatus.push_back(temp);
-		}
-	}
 
 	// loop through the bullets
 	for (int bulletCount{ m_TOTAL_BULLETS }; bulletCount > 0, !m_allTargetsHit; --bulletCount)
 	{
-		for (int i{}; i < m_trackTargetStatus.size(); ++i)
+		/*for (int i{}; i < m_trackTargetStatus.size(); ++i)
 		{
 			if (m_trackTargetStatus[i].first)
 			{
-				auto found = std::find_if(m_shapeSpawner.begin(), m_shapeSpawner.end(), [&](const auto& shape)
+				auto found = std::find_if(m_shapeSpawner.begin(), m_shapeSpawner.end(), [&](auto& shape)
 					{
 						return shape.data().id == m_trackTargetStatus[i].second;
 					});
@@ -385,7 +385,7 @@ void Game::estimateDifficulty()
 					found->active() = false;
 				}
 			}
-		}
+		}*/
 
 		std::vector<std::vector<ShapeData>> levelData{};
 		levelData.reserve(300);
@@ -515,17 +515,6 @@ void Game::estimateDifficulty()
 								if (shape.marked())
 								{
 									currentScore += 100;
-
-									for (int i{}; i < m_trackTargetStatus.size(); i++)
-									{
-										// set to true if ids match
-										if (shape.data().id == m_trackTargetStatus[i].second)
-										{
-											m_trackTargetStatus[i].first;
-											targetsHit++;
-											break;
-										}
-									}
 								}
 							}
 						}
@@ -539,6 +528,7 @@ void Game::estimateDifficulty()
 						m_skipStepTimer.restart();
 
 						// store the run end level data
+						updateShapeData(tempLevelData);
 						levelData.push_back(tempLevelData);
 
 						break;

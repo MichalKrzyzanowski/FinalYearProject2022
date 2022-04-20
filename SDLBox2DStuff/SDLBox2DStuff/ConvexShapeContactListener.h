@@ -44,7 +44,7 @@ public:
 		{
 			float force = impulse->normalImpulses[0] + impulse->normalImpulses[1];
 
-			if (force < 0.0f)
+			if (force < -1.0f)
 			{
 				printf("Coll with block\n");
 				if (first->type() == Type::TARGET)

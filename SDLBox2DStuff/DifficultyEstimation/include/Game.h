@@ -44,6 +44,7 @@ private:
 
 	void storeShapeData(ShapeData shapeData);
 	void reset();
+	void updateShapeData(std::vector<ShapeData>& dataVec);
 
 	void estimateDifficulty();
 	void quit();
