@@ -156,23 +156,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Button.cpp" />
-    <ClCompile Include="Circle.cpp" />
     <ClCompile Include="ConvexShape.cpp" />
     <ClCompile Include="LevelList.cpp" />
-    <ClCompile Include="Rect.cpp" />
     <ClCompile Include="SDLDraw.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Circle.h" />
     <ClInclude Include="ConvexShape.h" />
     <ClInclude Include="ConvexShapeContactListener.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Timer.h" />
     <ClInclude Include="LevelList.h" />
-    <ClInclude Include="Rect.h" />
     <ClInclude Include="Button.h" />
     <ClInclude Include="SDLDraw.h" />
     <ClInclude Include="Utility.h" />

@@ -48,10 +48,6 @@ private:
 	b2PolygonShape m_b2Shape;
 	b2FixtureDef m_b2FixtureDef;
 
-private:
-	void setPosition(b2Vec2 position);
-	void rotate(float radians);
-
 public:
 	// rect constructor
 	ConvexShape(b2World* world,
@@ -66,13 +62,9 @@ public:
 		bool marked = false);
 	~ConvexShape();
 
-	void update();
-	void render(SDL_Renderer* renderer);
 	void renderShadow(SDL_Renderer* renderer, Vector2f position);
-	void renderLines(SDL_Renderer* renderer);
 	void renderLines(SDL_Renderer* renderer, std::vector<SDL_FPoint>* points);
 	void launch(b2Vec2 direction, float power);
-	void setShape();
 
 	int width() { return m_data.width; }
 	int height() { return m_data.height; }

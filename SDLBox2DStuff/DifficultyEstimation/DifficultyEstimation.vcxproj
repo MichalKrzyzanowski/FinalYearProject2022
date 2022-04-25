@@ -155,7 +155,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\SDLBox2DStuff\Circle.cpp" />
     <ClCompile Include="..\SDLBox2DStuff\ConvexShape.cpp" />
     <ClCompile Include="..\SDLBox2DStuff\SDLDraw.cpp" />
     <ClCompile Include="src\Game.cpp" />
@@ -163,7 +162,6 @@
     <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\SDLBox2DStuff\Circle.h" />
     <ClInclude Include="..\SDLBox2DStuff\ConvexShape.h" />
     <ClInclude Include="..\SDLBox2DStuff\ConvexShapeContactListener.h" />
     <ClInclude Include="..\SDLBox2DStuff\SDLDraw.h" />

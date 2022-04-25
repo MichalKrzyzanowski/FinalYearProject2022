@@ -4,16 +4,15 @@ int runEstimation(void* data);
 
 Game::Game() :
 	m_gameIsRunning{ false },
-	m_groundConvexShape{ &m_world, Vector2f{-1, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH + 2, 100, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
-	m_leftWallConvexShape{ &m_world, Vector2f{SCREEN_WIDTH, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
-	m_rightWallConvexShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
-	m_roofConvexShape{ &m_world, Vector2f{0, -10}, SCREEN_WIDTH, 10, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
+	m_groundShape{ &m_world, Vector2f{-1, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH + 2, 100, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
+	m_leftWallShape{ &m_world, Vector2f{SCREEN_WIDTH, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
+	m_rightWallShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
+	m_roofShape{ &m_world, Vector2f{0, -10}, SCREEN_WIDTH, 10, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
 	m_rectanglePrefab{ &m_world, Vector2f{-100, 0}, 20, 50, b2_dynamicBody },
 	m_rectangleRotatedPrefab{ &m_world, Vector2f{-100, 0}, 50, 20, b2_dynamicBody },
 	m_squarePrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody },
 	m_targetPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
-	m_playerPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } },
-	m_circle{ Vector2f{200, 200}, 50 }
+	m_playerPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } }
 {
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -41,9 +40,9 @@ Game::Game() :
 	m_selectedButton = &m_rectButton;
 	m_world.SetContactListener(&m_contactListener);
 
-	m_debugDraw.setRenderer(m_renderer);
-	m_world.SetDebugDraw(&m_debugDraw);
-	m_debugDraw.SetFlags(b2Draw::e_shapeBit);
+	m_sdlDraw.setRenderer(m_renderer);
+	m_world.SetDebugDraw(&m_sdlDraw);
+	m_sdlDraw.SetFlags(b2Draw::e_shapeBit);
 
 	printf("Edit Phase\n");
 
@@ -132,7 +131,7 @@ void Game::processEvents(SDL_Event e)
 			}
 		}
 
-		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE && !m_estimationMode && m_editorState != EditorState::ENTERTEXT
+		if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_SPACE && m_editorState != EditorState::ENTERTEXT
 			&& m_editorState != EditorState::LOADLEVEL)
 		{
 			m_playSim = !m_playSim;
@@ -165,32 +164,29 @@ void Game::processEvents(SDL_Event e)
 
 		if (m_gameState == GameState::EDIT)
 		{
-			if (!m_estimationMode)
+			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_s)
 			{
-				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_s)
+				m_editorState = EditorState::ENTERTEXT;
+				SDL_StartTextInput();
+			}
+
+			if (m_editorState != EditorState::ENTERTEXT)
+			{
+				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_h)
 				{
-					m_editorState = EditorState::ENTERTEXT;
-					SDL_StartTextInput();
+					m_showHelp = !m_showHelp;
 				}
 
-				if (m_editorState != EditorState::ENTERTEXT)
+
+				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_l)
 				{
-					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_h)
-					{
-						m_showHelp = !m_showHelp;
-					}
-
-
-					if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_l)
-					{
-						m_editorState = EditorState::LOADLEVEL;
-					}
+					m_editorState = EditorState::LOADLEVEL;
 				}
+			}
 
-				if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_c)
-				{
-					clear();
-				}
+			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_c)
+			{
+				clear();
 			}
 
 			if (e.type == SDL_KEYUP && e.key.keysym.sym == SDLK_g && m_editorState != EditorState::ENTERTEXT
@@ -198,7 +194,7 @@ void Game::processEvents(SDL_Event e)
 			{
 				if (m_targetCount > 0 && m_player)
 				{
-					saveLevelData("temp-level");
+					saveLevelData("sim-level");
 
 					// run thread here
 					m_threads.push_back(SDL_CreateThread(runEstimation, "Estimation Thread", (void*)NULL));
@@ -299,15 +295,12 @@ void Game::processEvents(SDL_Event e)
 
 void Game::processMouseEvents(SDL_Event e)
 {
-	Uint32 buttons = SDL_GetMouseState(&x, &y);
+	Uint32 buttons = SDL_GetMouseState(&mouseX, &mouseY);
 
-	if (!m_estimationMode)
-	{
-		m_aimTargetPoint.x = static_cast<float>(x);
-		m_aimTargetPoint.y = static_cast<float>(y);
-	}
+	m_aimTargetPoint.x = static_cast<float>(mouseX);
+	m_aimTargetPoint.y = static_cast<float>(mouseY);
 
-	if (m_gameState == GameState::EDIT && y < m_toolbarBg.y && m_editorState != EditorState::ENTERTEXT
+	if (m_gameState == GameState::EDIT && mouseY < m_toolbarBg.y && m_editorState != EditorState::ENTERTEXT
 		&& m_editorState != EditorState::LOADLEVEL)
 	{
 		// if the left mouse button is pressed down
@@ -316,7 +309,7 @@ void Game::processMouseEvents(SDL_Event e)
 			if (m_currentShape->type() == Type::PLAYER && !m_playerPresent)
 			{
 				m_shapeSpawner.emplace_back(&m_world,
-					Vector2f{ static_cast<float>(x), static_cast<float>(y) },
+					Vector2f{ static_cast<float>(mouseX), static_cast<float>(mouseY) },
 					m_currentShape->width(),
 					m_currentShape->height(),
 					m_currentShape->b2BodyDefType(),
@@ -334,7 +327,7 @@ void Game::processMouseEvents(SDL_Event e)
 				if (m_currentShape->type() == Type::TARGET && m_targetCount < 3)
 				{
 					m_shapeSpawner.emplace_back(&m_world,
-						Vector2f{ static_cast<float>(x), static_cast<float>(y) },
+						Vector2f{ static_cast<float>(mouseX), static_cast<float>(mouseY) },
 						m_currentShape->width(),
 						m_currentShape->height(),
 						m_currentShape->b2BodyDefType(),
@@ -348,7 +341,7 @@ void Game::processMouseEvents(SDL_Event e)
 				if (m_currentShape->type() == Type::BLOCK)
 				{
 					m_shapeSpawner.emplace_back(&m_world,
-						Vector2f{ static_cast<float>(x), static_cast<float>(y) },
+						Vector2f{ static_cast<float>(mouseX), static_cast<float>(mouseY) },
 						m_currentShape->width(),
 						m_currentShape->height(),
 						m_currentShape->b2BodyDefType(),
@@ -360,10 +353,10 @@ void Game::processMouseEvents(SDL_Event e)
 			}
 		}
 	}
-	else if (m_gameState == GameState::EDIT && y > m_toolbarBg.y)
+	else if (m_gameState == GameState::EDIT && mouseY > m_toolbarBg.y)
 	{
-		if ((x >= m_squareButton.position().x && x <= m_squareButton.position().x + m_squareButton.width()) &&
-			(y >= m_squareButton.position().y && y <= m_squareButton.position().y + m_squareButton.height()))
+		if ((mouseX >= m_squareButton.position().x && mouseX <= m_squareButton.position().x + m_squareButton.width()) &&
+			(mouseY >= m_squareButton.position().y && mouseY <= m_squareButton.position().y + m_squareButton.height()))
 		{
 			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
@@ -372,8 +365,8 @@ void Game::processMouseEvents(SDL_Event e)
 				m_editorState = EditorState::PLACE;
 			}
 		}
-		else if ((x >= m_rectButton.position().x && x <= m_rectButton.position().x + m_rectButton.width()) &&
-			(y >= m_rectButton.position().y && y <= m_rectButton.position().y + m_rectButton.height()))
+		else if ((mouseX >= m_rectButton.position().x && mouseX <= m_rectButton.position().x + m_rectButton.width()) &&
+			(mouseY >= m_rectButton.position().y && mouseY <= m_rectButton.position().y + m_rectButton.height()))
 		{
 			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
@@ -382,8 +375,8 @@ void Game::processMouseEvents(SDL_Event e)
 				m_editorState = EditorState::PLACE;
 			}
 		}
-		else if ((x >= m_rectRotatedButton.position().x && x <= m_rectRotatedButton.position().x + m_rectRotatedButton.width()) &&
-			(y >= m_rectRotatedButton.position().y && y <= m_rectRotatedButton.position().y + m_rectRotatedButton.height()))
+		else if ((mouseX >= m_rectRotatedButton.position().x && mouseX <= m_rectRotatedButton.position().x + m_rectRotatedButton.width()) &&
+			(mouseY >= m_rectRotatedButton.position().y && mouseY <= m_rectRotatedButton.position().y + m_rectRotatedButton.height()))
 		{
 			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
@@ -392,8 +385,8 @@ void Game::processMouseEvents(SDL_Event e)
 				m_editorState = EditorState::PLACE;
 			}
 		}
-		else if ((x >= m_targetButton.position().x && x <= m_targetButton.position().x + m_targetButton.width()) &&
-			(y >= m_targetButton.position().y && y <= m_targetButton.position().y + m_targetButton.height()))
+		else if ((mouseX >= m_targetButton.position().x && mouseX <= m_targetButton.position().x + m_targetButton.width()) &&
+			(mouseY >= m_targetButton.position().y && mouseY <= m_targetButton.position().y + m_targetButton.height()))
 		{
 			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
@@ -402,8 +395,8 @@ void Game::processMouseEvents(SDL_Event e)
 				m_editorState = EditorState::PLACE;
 			}
 		}
-		else if ((x >= m_playerButton.position().x && x <= m_playerButton.position().x + m_playerButton.width()) &&
-			(y >= m_playerButton.position().y && y <= m_playerButton.position().y + m_playerButton.height()))
+		else if ((mouseX >= m_playerButton.position().x && mouseX <= m_playerButton.position().x + m_playerButton.width()) &&
+			(mouseY >= m_playerButton.position().y && mouseY <= m_playerButton.position().y + m_playerButton.height()))
 		{
 			if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 			{
@@ -457,7 +450,7 @@ void Game::processMouseEvents(SDL_Event e)
 	{
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 		{
-			shoot(Vector2f{ static_cast<float>(x), static_cast<float>(y) });
+			shoot(Vector2f{ static_cast<float>(mouseX), static_cast<float>(mouseY) });
 			m_shootMode = false;
 			--m_bulletsCount;
 
@@ -521,7 +514,7 @@ void Game::update()
 				}
 			}
 
-			if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+			if (m_skipStepTimer.getTicksAsSeconds() >= m_skipTimerGoal)
 			{
 				readyToShoot = true;
 				m_skipStepTimer.restart();
@@ -531,72 +524,65 @@ void Game::update()
 			{
 				m_shootMode = true;
 
-				if (!m_estimationMode)
+				if (m_bulletsCount <= 0 && !gameWin)
 				{
-					if (m_bulletsCount <= 0 && !gameWin)
-					{
-						m_gameState = GameState::LOSE;
-						m_phaseText = loadFromRenderedText("You Lose!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-						return;
-					}
-					else if (gameWin)
-					{
-						m_gameState = GameState::WIN;
-						m_phaseText = loadFromRenderedText("You Win!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
-						return;
-					}
-
-					printf("Shoot Phase\n");
-					m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+					m_gameState = GameState::LOSE;
+					m_phaseText = loadFromRenderedText("You Lose!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+					return;
+				}
+				else if (gameWin)
+				{
+					m_gameState = GameState::WIN;
+					m_phaseText = loadFromRenderedText("You Win!", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+					return;
 				}
 
+				printf("Shoot Phase\n");
+				m_phaseText = loadFromRenderedText("Shoot Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 			}
 		}
 		else
 		{
-			if (m_player && !m_estimationMode)
+			if (keyState[SDL_SCANCODE_LEFT])
 			{
-				if (state[SDL_SCANCODE_LEFT])
+				if (keyState[SDL_SCANCODE_LSHIFT])
 				{
-					if (state[SDL_SCANCODE_LSHIFT])
-					{
-						m_power -= m_powerGain;
-					}
-
 					m_power -= m_powerGain;
-
-					if (m_power <= m_MIN_POWER)
-					{
-						m_power = m_MIN_POWER;
-					}
-
-					printf("Power: %f\n\n", m_power);
-
-					std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
-
-					m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 				}
 
-				if (state[SDL_SCANCODE_RIGHT])
+				m_power -= m_powerGain;
+
+				if (m_power <= m_MIN_POWER)
 				{
-					if (state[SDL_SCANCODE_LSHIFT])
-					{
-						m_power += m_powerGain;
-					}
-
-					m_power += m_powerGain;
-
-					if (m_power >= m_MAX_POWER)
-					{
-						m_power = m_MAX_POWER;
-					}
-
-					printf("Power: %f\n\n", m_power);
-
-					std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
-
-					m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+					m_power = m_MIN_POWER;
 				}
+
+				printf("Power: %f\n\n", m_power);
+
+				std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
+
+				m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+			}
+
+			if (keyState[SDL_SCANCODE_RIGHT])
+			{
+				if (keyState[SDL_SCANCODE_LSHIFT])
+				{
+					m_power += m_powerGain;
+				}
+
+				m_power += m_powerGain;
+
+				if (m_power >= m_MAX_POWER)
+				{
+					m_power = m_MAX_POWER;
+				}
+
+				printf("Power: %f\n\n", m_power);
+
+				std::string powerStr = "Power: " + std::to_string((int)(m_power / 8.0f)) + '%';
+
+				m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 			}
 		}
 	}
@@ -634,9 +620,9 @@ void Game::render()
 
 	if (m_gameState == GameState::EDIT)
 	{
-		if (y < m_toolbarBg.y && m_currentShape && m_editorState == EditorState::PLACE)
+		if (mouseY < m_toolbarBg.y && m_currentShape && m_editorState == EditorState::PLACE)
 		{
-			m_currentShape->renderShadow(m_renderer, Vector2f{ static_cast<float>(x), static_cast<float>(y) });
+			m_currentShape->renderShadow(m_renderer, Vector2f{ static_cast<float>(mouseX), static_cast<float>(mouseY) });
 		}
 
 		if (m_showHelp)
@@ -676,7 +662,7 @@ void Game::render()
 
 		renderText(m_renderer, &m_rectangleText, Vector2f{ m_rectButton.position().x - m_rectButton.width() / 2,
 											m_rectButton.position().y + 45.0f, });
-		
+
 		renderText(m_renderer, &m_rectangleRotatedText, Vector2f{ m_rectRotatedButton.position().x - m_rectRotatedButton.width() / 2,
 											m_rectRotatedButton.position().y + 45.0f, });
 
@@ -903,7 +889,7 @@ void Game::clear()
 
 int runEstimation(void* data)
 {
-	system("DifficultyEstimation.exe temp-level");
+	system("DifficultyEstimation.exe sim-level");
 	printf("Thread finished\n");
 
 	return 0;
@@ -922,7 +908,7 @@ void Game::cleanUp()
 
 	SDL_DestroyTexture(m_rectangleText.texture);
 	m_rectangleText.texture = nullptr;
-	
+
 	SDL_DestroyTexture(m_rectangleRotatedText.texture);
 	m_rectangleRotatedText.texture = nullptr;
 

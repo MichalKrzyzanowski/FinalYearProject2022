@@ -11,17 +11,14 @@
 #include <box2d.h>
 #include <fstream>
 #include <filesystem>
-#include "Rect.h"
+#include <Windows.h>
 #include "ConvexShape.h"
 #include "Utility.h"
-#include "ConvexShape.h"
 #include "Timer.h"
-#include "Circle.h"
 #include "Button.h"
 #include "ConvexShapeContactListener.h"
 #include "SDLDraw.h"
 #include "LevelList.h"
-#include <Windows.h>
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -37,8 +34,6 @@ enum class GameState
 enum class EditorState
 {
 	PLACE,
-	EDIT,
-	REMOVE,
 	ENTERTEXT,
 	LOADLEVEL
 };
@@ -107,6 +102,8 @@ private:
 
 	float m_simSpeed{ 1.0f };
 
+	float m_skipTimerGoal{ 1.0f };
+
 	Timer m_skipStepTimer{};
 
 	b2Vec2 m_gravity{ 0.0f, 9.8f }; // fps 60: grav = 9.8f
@@ -116,16 +113,16 @@ private:
 	int32_t m_velocityIterations{ 2000 };
 	int32_t m_positionIterations{ 2000 };
 
-	ConvexShape m_groundConvexShape;
-	ConvexShape m_leftWallConvexShape;
-	ConvexShape m_rightWallConvexShape;
-	ConvexShape m_roofConvexShape;
+	ConvexShape m_groundShape;
+	ConvexShape m_leftWallShape;
+	ConvexShape m_rightWallShape;
+	ConvexShape m_roofShape;
 
 	GameState m_gameState = GameState::EDIT;
 	EditorState m_editorState = EditorState::PLACE;
 
 	// shot variables
-	const Uint8* state = SDL_GetKeyboardState(nullptr);
+	const Uint8* keyState = SDL_GetKeyboardState(nullptr);
 	float m_power{ 400.0f };
 	float m_powerGain{ 2.0f };
 
@@ -139,16 +136,14 @@ private:
 	/*float m_shotAngle;
 	Vector2f m_shotDirection{ 0.0f, 0.0f };*/
 
-	Circle m_circle;
-
 	bool m_playSim{ false };
 	int m_targetCount{ 0 };
 
 	// messing around with box2d
-	int x, y;
-	bool m_sprayTime{ false };
-	Timer m_timer{};
-	float m_sprayCooldown{ 0.05f };
+	int mouseX, mouseY;
+	//bool m_sprayTime{ false };
+	//Timer m_timer{};
+	//float m_sprayCooldown{ 0.05f };
 	std::vector<ConvexShape> m_shapeSpawner{};
 	std::vector<ShapeData> m_shapeData{};
 	ConvexShape* m_currentBullet{ nullptr };
@@ -163,11 +158,10 @@ private:
 	ConvexShape* m_currentShape{};
 	ConvexShape* m_player{};
 	bool m_playerPresent{ false };
-	bool m_estimationMode{ false };
 
 	ConvexShapeContactListener m_contactListener;
 
-	SDLDraw m_debugDraw;
+	SDLDraw m_sdlDraw;
 
 	// UI
 	SDL_FRect m_toolbarBg{ 0.0f, SCREEN_HEIGHT - 70.0f, SCREEN_WIDTH, 70.0f };

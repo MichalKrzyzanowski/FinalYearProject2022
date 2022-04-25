@@ -69,41 +69,6 @@ ConvexShape::~ConvexShape()
 	m_world->DestroyBody(m_b2Body);
 }
 
-void ConvexShape::update()
-{
-	if (m_b2BodyDef.type != b2_staticBody)
-	{
-		setPosition(m_b2Body->GetPosition());
-		rotate(Rad2Deg(m_b2Body->GetAngle() / SCALING_FACTOR));
-	}
-}
-
-void ConvexShape::setPosition(b2Vec2 position)
-{
-	for (int i{}; i < m_points.size(); ++i)
-	{
-		m_points[i].x = (position.x + m_b2Shape.m_vertices[i % m_b2Shape.m_count].x) * SCALING_FACTOR;
-		m_points[i].y = (position.y + m_b2Shape.m_vertices[i % m_b2Shape.m_count].y) * SCALING_FACTOR;
-	}
-}
-
-void ConvexShape::rotate(float radians)
-{
-	/*for (SDL_FPoint& point : m_points)
-	{
-		rotatePoint(m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
-			m_b2Body->GetWorldCenter().y * SCALING_FACTOR,
-			radians, point);
-	}*/
-}
-
-void ConvexShape::render(SDL_Renderer* renderer)
-{
-	SDL_SetRenderDrawColor(renderer, color().r, color().g, color().b, color().a);
-
-	//renderLines(renderer);
-}
-
 void ConvexShape::renderShadow(SDL_Renderer* renderer, Vector2f position)
 {
 	SDL_SetRenderDrawColor(renderer, color().r, color().g, color().b, 128);
@@ -115,27 +80,6 @@ void ConvexShape::renderShadow(SDL_Renderer* renderer, Vector2f position)
 	points.push_back(SDL_FPoint{ position.x, position.y + m_data.height });
 
 	renderLines(renderer, &points);
-}
-
-void ConvexShape::renderLines(SDL_Renderer* renderer)
-{
-	//SDL_RenderDrawLinesF(renderer, m_points.data(), m_points.size());
-
-	// draw a line from the last point to the first point
-	SDL_RenderDrawLineF(renderer,
-		m_points.data()[m_points.size() - 1].x,
-		m_points.data()[m_points.size() - 1].y,
-		m_points.data()[0].x,
-		m_points.data()[0].y);
-
-	// draw the center of mass
-	SDL_RenderDrawPointF(renderer,
-		m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
-		m_b2Body->GetWorldCenter().y * SCALING_FACTOR);
-
-	SDL_RenderDrawPointF(renderer,
-		m_b2Body->GetWorldCenter().x * SCALING_FACTOR,
-		m_b2Body->GetWorldCenter().y * SCALING_FACTOR);
 }
 
 void ConvexShape::renderLines(SDL_Renderer* renderer, std::vector<SDL_FPoint>* points)
@@ -158,16 +102,4 @@ void ConvexShape::renderLines(SDL_Renderer* renderer, std::vector<SDL_FPoint>* p
 void ConvexShape::launch(b2Vec2 direction, float power)
 {
 	m_b2Body->ApplyForceToCenter(b2Vec2{ direction.x * m_b2Body->GetMass() * power, direction.y * m_b2Body->GetMass() * power }, true);
-}
-
-void ConvexShape::setShape()
-{
-	/*std::vector<b2Vec2> points;
-
-	for (SDL_FPoint point : m_points)
-	{
-		points.push_back(b2Vec2{ point.x / SCALING_FACTOR, point.y / SCALING_FACTOR });
-	}*/
-
-	m_b2Shape.Set(m_points.data(), m_points.size());
 }

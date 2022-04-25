@@ -14,7 +14,6 @@
 #include "../SDLBox2DStuff/ConvexShape.h"
 #include "../SDLBox2DStuff/Utility.h"
 #include "Timer.h"
-#include "../SDLBox2DStuff/Circle.h"
 #include "../SDLBox2DStuff/ConvexShapeContactListener.h"
 #include "../SDLBox2DStuff/SDLDraw.h"
 
@@ -58,7 +57,7 @@ private:
 	bool m_gameIsRunning;
 	bool m_shootMode{ false };
 
-	std::string m_levelName{ "temp-level" };
+	std::string m_levelName{ "sim-level" };
 
 	SDL_Window* m_window;
 	SDL_Renderer* m_renderer;
@@ -79,6 +78,8 @@ private:
 	Timer m_skipStepTimer{};
 	Timer m_quitTimer{};
 
+	float m_skipTimerGoal{ 1.0f };
+
 	b2Vec2 m_gravity{ 0.0f, 9.8f }; // fps 60: grav = 9.8f
 	b2World m_world{ m_gravity };
 
@@ -86,10 +87,10 @@ private:
 	int32_t m_velocityIterations{ 2000 };
 	int32_t m_positionIterations{ 2000 };
 
-	ConvexShape m_groundConvexShape;
-	ConvexShape m_leftWallConvexShape;
-	ConvexShape m_rightWallConvexShape;
-	ConvexShape m_roofConvexShape;
+	ConvexShape m_groundShape;
+	ConvexShape m_leftWallShape;
+	ConvexShape m_rightWallShape;
+	ConvexShape m_roofShape;
 
 	GameState m_state{ GameState::ESTIMATION };
 
@@ -104,8 +105,6 @@ private:
 	int m_bulletsCount{ m_TOTAL_BULLETS };
 
 	SDL_FPoint m_aimTargetPoint{};
-
-	Circle m_circle;
 
 	int m_targetCount{ 0 };
 
@@ -125,7 +124,7 @@ private:
 
 	ConvexShapeContactListener m_contactListener;
 
-	SDLDraw m_debugDraw;
+	SDLDraw m_sdlDraw;
 };
 
 #endif // !GAME_H

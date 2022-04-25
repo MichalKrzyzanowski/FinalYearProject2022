@@ -2,15 +2,14 @@
 
 Game::Game(int mainArgsCount, char** mainArgs) :
 	m_gameIsRunning{ true },
-	m_groundConvexShape{ &m_world, Vector2f{-1, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH + 2, 100, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
-	m_leftWallConvexShape{ &m_world, Vector2f{SCREEN_WIDTH, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
-	m_rightWallConvexShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
-	m_roofConvexShape{ &m_world, Vector2f{0, -10}, SCREEN_WIDTH, 10, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
+	m_groundShape{ &m_world, Vector2f{-1, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH + 2, 100, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
+	m_leftWallShape{ &m_world, Vector2f{SCREEN_WIDTH, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
+	m_rightWallShape{ &m_world, Vector2f{-10, 0}, 10, SCREEN_HEIGHT, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
+	m_roofShape{ &m_world, Vector2f{0, -10}, SCREEN_WIDTH, 10, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
 	m_rectanglePrefab{ &m_world, Vector2f{-100, 0}, 20, 50, b2_dynamicBody },
 	m_squarePrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody },
 	m_targetPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
-	m_playerPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } },
-	m_circle{ Vector2f{200, 200}, 50 }
+	m_playerPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } }
 {
 	//ShowWindow(GetConsoleWindow(), SW_HIDE);
 
@@ -65,13 +64,13 @@ Game::Game(int mainArgsCount, char** mainArgs) :
 	m_currentShape = &m_rectanglePrefab;
 	m_world.SetContactListener(&m_contactListener);
 
-	m_debugDraw.setRenderer(m_renderer);
-	m_world.SetDebugDraw(&m_debugDraw);
-	m_debugDraw.SetFlags(b2Draw::e_shapeBit);
+	m_sdlDraw.setRenderer(m_renderer);
+	m_world.SetDebugDraw(&m_sdlDraw);
+	m_sdlDraw.SetFlags(b2Draw::e_shapeBit);
 
 	std::string bulletStr = "Bullets Left: " + std::to_string(m_bulletsCount);
 
-	m_phaseText = loadFromRenderedText("Edit Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+	m_phaseText = loadFromRenderedText("Estimation Phase", SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 	printf("got here\n");
 
 	m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
@@ -178,7 +177,7 @@ void Game::update()
 			}
 		}
 
-		if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+		if (m_skipStepTimer.getTicksAsSeconds() >= m_skipTimerGoal)
 		{
 			readyToShoot = true;
 			m_skipStepTimer.restart();
@@ -340,25 +339,25 @@ void Game::updateShapeData(std::vector<ShapeData>& dataVec)
 {
 	for (int i{}; i < m_shapeSpawner.size(); ++i)
 	{
-		dataVec.at(i).position.x = m_shapeSpawner.at(i).position().x;
-		dataVec.at(i).position.y = m_shapeSpawner.at(i).position().y;
-		dataVec.at(i).angle = m_shapeSpawner.at(i).angle();
-		dataVec.at(i).marked = m_shapeSpawner.at(i).marked();
+		if (m_shapeSpawner.at(i).type() != Type::BULLET)
+		{
+			dataVec.at(i).position.x = (m_shapeSpawner.at(i).position().x * SCALING_FACTOR) - dataVec.at(i).width / 2.0f;
+			dataVec.at(i).position.y = (m_shapeSpawner.at(i).position().y * SCALING_FACTOR) - dataVec.at(i).height / 2.0f;
+			dataVec.at(i).angle = m_shapeSpawner.at(i).angle();
+			dataVec.at(i).marked = m_shapeSpawner.at(i).marked();
+		}
 	}
 }
 
 void Game::estimateDifficulty()
 {
 	SDL_Event e{};
-	loadLevelData("temp-level");
-
-	m_circle.position() = Vector2f{ m_player->position().x * SCALING_FACTOR, m_player->position().y * SCALING_FACTOR };
-	m_circle.setup();
+	loadLevelData(m_levelName);
 
 	m_power = m_MIN_POWER;
 
 	int powerStep{ 1 };
-	int angleIncrement{ 45 };
+	int angleIncrement{ 20 };
 
 	std::vector<int> m_scores{};
 	m_scores.reserve(5000);
@@ -367,32 +366,63 @@ void Game::estimateDifficulty()
 
 	bool m_allTargetsHit{ false };
 
-	// loop through the bullets
-	for (int bulletCount{ m_TOTAL_BULLETS }; bulletCount > 0, !m_allTargetsHit; --bulletCount)
-	{
-		/*for (int i{}; i < m_trackTargetStatus.size(); ++i)
-		{
-			if (m_trackTargetStatus[i].first)
-			{
-				auto found = std::find_if(m_shapeSpawner.begin(), m_shapeSpawner.end(), [&](auto& shape)
-					{
-						return shape.data().id == m_trackTargetStatus[i].second;
-					});
+	// used to see which targets have been hit with previous bullets
+	std::vector<std::pair<int, bool>> targetHitTracker{};
 
-				if (found._Ptr && found->type() == Type::TARGET)
+	for (ConvexShape& shape : m_shapeSpawner)
+	{
+		if (shape.type() == Type::TARGET)
+		{
+			std::pair<int, bool> temp{};
+			temp.first = shape.data().id;
+			temp.second = false;
+
+			targetHitTracker.push_back(temp);
+		}
+	}
+
+	// loop through the bullets
+	for (int bulletCount{ m_TOTAL_BULLETS }; bulletCount > 0; --bulletCount)
+	{
+		if (m_allTargetsHit)
+		{
+			break;
+		}
+
+		for (int i{}; i < m_shapeSpawner.size(); ++i)
+		{
+			if (m_shapeSpawner.at(i).type() == Type::TARGET && m_shapeSpawner.at(i).marked())
+			{
+				for (int j{}; j < targetHitTracker.size(); ++j)
 				{
-					found->marked() = true;
-					found->active() = false;
+					if (targetHitTracker.at(j).first == m_shapeSpawner.at(i).data().id)
+					{
+						targetHitTracker.at(j).second = true;
+						break;
+					}
 				}
 			}
-		}*/
+		}
+
+		std::string bulletStr = "Bullets Left: " + std::to_string(bulletCount);
+
+		m_bulletCountText = loadFromRenderedText(bulletStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+
+		m_power = m_MIN_POWER;
+
+		m_scores.clear();
 
 		std::vector<std::vector<ShapeData>> levelData{};
 		levelData.reserve(300);
 
 		// loop through each power level
-		for (; m_power < m_MAX_POWER, !m_allTargetsHit; m_power += ((m_MAX_POWER - m_MIN_POWER) / 4))
+		for (; m_power < m_MAX_POWER; m_power += ((m_MAX_POWER - m_MIN_POWER) / 2))
 		{
+			if (m_allTargetsHit)
+			{
+				break;
+			}
+
 			printf("Setting Power\n");
 
 			if (m_power >= m_MAX_POWER)
@@ -409,8 +439,13 @@ void Game::estimateDifficulty()
 			shotTarget.position = SDL_FPoint{ (m_player->position().x * SCALING_FACTOR) + 30.0f, (m_player->position().y * SCALING_FACTOR) };
 
 			// loop through a 360 degree circle
-			for (int j{}; j < 360, !m_allTargetsHit; j += angleIncrement)
+			for (int j{}; j < 360; j += angleIncrement)
 			{
+				if (m_allTargetsHit)
+				{
+					break;
+				}
+
 				rotatePoint((m_player->position().x * SCALING_FACTOR), (m_player->position().y * SCALING_FACTOR), Deg2Rad(angleIncrement), shotTarget.position);
 
 				int currentScore{ 0 };
@@ -444,7 +479,7 @@ void Game::estimateDifficulty()
 					update();
 					render();
 
-					if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+					if (m_skipStepTimer.getTicksAsSeconds() >= m_skipTimerGoal)
 					{
 						shotReady = true;
 					}
@@ -487,7 +522,7 @@ void Game::estimateDifficulty()
 					update();
 					render();
 
-					if (m_skipStepTimer.getTicksAsSeconds() >= 5.0f)
+					if (m_skipStepTimer.getTicksAsSeconds() >= m_skipTimerGoal)
 					{
 						endShotSim = true;
 					}
@@ -502,19 +537,33 @@ void Game::estimateDifficulty()
 
 						for (ConvexShape& shape : m_shapeSpawner)
 						{
-							if (targetsHit >= m_targetCount)
+							if (shape.type() != Type::BULLET)
 							{
-								m_allTargetsHit = true;
-								break;
+								tempLevelData.push_back(shape.data());
 							}
-
-							tempLevelData.push_back(shape.data());
 
 							if (shape.type() == Type::TARGET)
 							{
 								if (shape.marked())
 								{
-									currentScore += 100;
+									for (int k{}; k < targetHitTracker.size(); ++k)
+									{
+										if (targetHitTracker.at(k).first == shape.data().id)
+										{
+											if (!targetHitTracker.at(k).second)
+											{
+												currentScore += 100;
+												targetsHit++;
+												break;
+											}
+										}
+									}
+
+									if (targetsHit >= m_targetCount)
+									{
+										printf("all targets hit!\n");
+										m_allTargetsHit = true;
+									}
 								}
 							}
 						}
@@ -554,11 +603,11 @@ void Game::estimateDifficulty()
 		printf("Best Score: %dpts\n\n", bestScore);
 
 	}
-	//printf("Estimation Complete!\n Difficulty Rating: %d/10\n\n", evaluateDifficulty(bestScore));
+	printf("Estimation Complete!\n Difficulty Rating: %d/10\n\n", evaluateDifficulty(scoredShots));
 
-	//std::string rating = "Difficulty Rating:" + std::to_string(evaluateDifficulty(bestScore)) + "/10";
+	std::string rating = "Difficulty Rating:" + std::to_string(scoredShots) + "/10";
 
-	//m_phaseText = loadFromRenderedText(rating.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
+	m_phaseText = loadFromRenderedText(rating.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
 	m_state = GameState::DONE;
 	m_quitTimer.restart();
@@ -637,32 +686,48 @@ int Game::distanceScoreEvaluation(int shortestDistance)
 
 int Game::evaluateDifficulty(int bestScore)
 {
-	int targetsLeft{ 0 };
-	int targetAmt{ 0 };
-
-	for (ConvexShape& shape : m_shapeSpawner)
+	if (bestScore > 0.0f && bestScore <= 3.0f)
 	{
-		if (shape.type() == Type::TARGET)
-		{
-			++targetAmt;
-
-			if (!shape.marked())
-			{
-				++targetsLeft;
-			}
-		}
+		return 1;
+	}
+	else if (bestScore > 3.0f && bestScore <= 4.0f)
+	{
+		return 2;
+	}
+	else if (bestScore > 4.0f && bestScore <= 5.0f)
+	{
+		return 3;
+	}
+	else if (bestScore > 5.0f && bestScore <= 6.0f)
+	{
+		return 4;
+	}
+	else if (bestScore > 6.0f && bestScore <= 7.0f)
+	{
+		return 5;
+	}
+	else if (bestScore > 7.0f && bestScore <= 8.0f)
+	{
+		return 6;
+	}
+	else if (bestScore > 8.0f && bestScore <= 9.0f)
+	{
+		return 7;
+	}
+	else if (bestScore > 9.0f && bestScore <= 10.0f)
+	{
+		return 8;
+	}
+	else if (bestScore > 10.0f && bestScore <= 11.0f)
+	{
+		return 9;
+	}
+	else if (bestScore > 11.0f)
+	{
+		return 10;
 	}
 
-	int maxScore{ targetAmt * 100 };
-	int scoreIncrement{ maxScore / 10 };
-
-	for (int i{ 1 }; i <= 10; ++i)
-	{
-		if (bestScore > scoreIncrement * i - 1 && bestScore <= scoreIncrement * i)
-		{
-			return i;
-		}
-	}
+	return 0;
 }
 
 void Game::cleanUp()
