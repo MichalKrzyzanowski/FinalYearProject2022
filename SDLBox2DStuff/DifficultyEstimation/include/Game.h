@@ -50,6 +50,8 @@ private:
 	int calculateDistanceScore();
 	int distanceScoreEvaluation(int shortestDistance);
 	int evaluateDifficulty(int bestScore);
+	void storeResult(const char* data);
+	void clearResultsFile();
 
 	void cleanUp();
 	void shoot(Vector2f targetPosition);

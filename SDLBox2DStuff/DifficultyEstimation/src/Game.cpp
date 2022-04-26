@@ -79,6 +79,8 @@ Game::Game(int mainArgsCount, char** mainArgs) :
 
 	m_powerText = loadFromRenderedText(powerStr.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
+	clearResultsFile();
+
 	estimateDifficulty();
 }
 
@@ -358,6 +360,7 @@ void Game::estimateDifficulty()
 
 	int powerStep{ 1 };
 	int angleIncrement{ 20 };
+	int scoredShotCount{};
 
 	std::vector<int> m_scores{};
 	m_scores.reserve(5000);
@@ -384,10 +387,16 @@ void Game::estimateDifficulty()
 	// loop through the bullets
 	for (int bulletCount{ m_TOTAL_BULLETS }; bulletCount > 0; --bulletCount)
 	{
+		if (bulletCount < m_TOTAL_BULLETS) m_skipTimerGoal = 0.5f;
+
+		printf("Starting new run. bullets: %d\n", bulletCount);
+
 		if (m_allTargetsHit)
 		{
 			break;
 		}
+		
+		reset();
 
 		for (int i{}; i < m_shapeSpawner.size(); ++i)
 		{
@@ -535,40 +544,68 @@ void Game::estimateDifficulty()
 						// checking if any target has been hit & storing level data
 						int targetsHit{};
 
-						for (ConvexShape& shape : m_shapeSpawner)
+						// go through the targets from previous iterations that where shot first
+						for (int l{}; l < targetHitTracker.size(); ++l)
 						{
-							if (shape.type() != Type::BULLET)
+							if (targetHitTracker.at(l).second)
 							{
-								tempLevelData.push_back(shape.data());
+								targetsHit++;
 							}
+						}
 
-							if (shape.type() == Type::TARGET)
+						if (targetsHit >= m_targetCount)
+						{
+							printf("all targets hit!\n");
+							m_allTargetsHit = true;
+						}
+
+						if (!m_allTargetsHit)
+						{
+							for (ConvexShape& shape : m_shapeSpawner)
 							{
-								if (shape.marked())
+								if (shape.type() != Type::BULLET)
 								{
-									for (int k{}; k < targetHitTracker.size(); ++k)
+									tempLevelData.push_back(shape.data());
+								}
+
+								if (shape.type() == Type::TARGET)
+								{
+									if (shape.marked())
 									{
-										if (targetHitTracker.at(k).first == shape.data().id)
+										for (int k{}; k < targetHitTracker.size(); ++k)
 										{
-											if (!targetHitTracker.at(k).second)
+											if (targetHitTracker.at(k).first == shape.data().id)
 											{
-												currentScore += 100;
-												targetsHit++;
-												break;
+												if (!targetHitTracker.at(k).second)
+												{
+													currentScore += 100;
+													targetsHit++;
+													break;
+												}
 											}
 										}
-									}
 
-									if (targetsHit >= m_targetCount)
-									{
-										printf("all targets hit!\n");
-										m_allTargetsHit = true;
+										if (targetsHit >= m_targetCount)
+										{
+											printf("all targets hit!\n");
+											m_allTargetsHit = true;
+										}
 									}
 								}
 							}
 						}
 
 						currentScore += calculateDistanceScore();
+
+						// track results data
+						if (currentScore >= 5)
+						{
+							scoredShotCount++;
+							std::string result = std::to_string(currentScore) + "pts, shot: "
+								+ std::to_string(scoredShotCount) + '\n';
+							storeResult(result.c_str());
+						}
+
 						if (currentScore > 15) scoredShots++; // will be used to determine the final difficulty rating
 						printf("Iteration done. Score: %dpts\n\n", currentScore);
 
@@ -603,9 +640,11 @@ void Game::estimateDifficulty()
 		printf("Best Score: %dpts\n\n", bestScore);
 
 	}
-	printf("Estimation Complete!\n Difficulty Rating: %d/10\n\n", evaluateDifficulty(scoredShots));
+	int finalDifficulty{ evaluateDifficulty(scoredShots) };
 
-	std::string rating = "Difficulty Rating:" + std::to_string(scoredShots) + "/10";
+	printf("Estimation Complete!\n Difficulty Rating: %d/10\n\n", finalDifficulty);
+
+	std::string rating = "Difficulty Rating:" + std::to_string(finalDifficulty) + "/10";
 
 	m_phaseText = loadFromRenderedText(rating.c_str(), SDL_Color{ 0, 0, 0, 255 }, m_fontNormal, m_renderer);
 
@@ -690,44 +729,60 @@ int Game::evaluateDifficulty(int bestScore)
 	{
 		return 1;
 	}
-	else if (bestScore > 3.0f && bestScore <= 4.0f)
+	else if (bestScore > 3.0f && bestScore <= 10.0f)
 	{
 		return 2;
 	}
-	else if (bestScore > 4.0f && bestScore <= 5.0f)
+	else if (bestScore > 10.0f && bestScore <= 20.0f)
 	{
 		return 3;
 	}
-	else if (bestScore > 5.0f && bestScore <= 6.0f)
+	else if (bestScore > 20.0f && bestScore <= 30.0f)
 	{
 		return 4;
 	}
-	else if (bestScore > 6.0f && bestScore <= 7.0f)
+	else if (bestScore > 30.0f && bestScore <= 40.0f)
 	{
 		return 5;
 	}
-	else if (bestScore > 7.0f && bestScore <= 8.0f)
+	else if (bestScore > 40.0f && bestScore <= 50.0f)
 	{
 		return 6;
 	}
-	else if (bestScore > 8.0f && bestScore <= 9.0f)
+	else if (bestScore > 50.0f && bestScore <= 60.0f)
 	{
 		return 7;
 	}
-	else if (bestScore > 9.0f && bestScore <= 10.0f)
+	else if (bestScore > 60.0f && bestScore <= 70.0f)
 	{
 		return 8;
 	}
-	else if (bestScore > 10.0f && bestScore <= 11.0f)
+	else if (bestScore > 70.0f && bestScore <= 80.0f)
 	{
 		return 9;
 	}
-	else if (bestScore > 11.0f)
+	else if (bestScore > 100.0f)
 	{
 		return 10;
 	}
 
 	return 0;
+}
+
+void Game::storeResult(const char* data)
+{
+	std::ofstream results("results/results-draft.txt", std::ios::app);
+
+	results << data << '\n';
+
+	results.close();
+}
+
+void Game::clearResultsFile()
+{
+	std::ofstream results("results/results-draft.txt", std::ios::out | std::ios::trunc);
+
+	results.close();
 }
 
 void Game::cleanUp()

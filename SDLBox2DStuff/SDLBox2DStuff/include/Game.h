@@ -102,7 +102,7 @@ private:
 
 	float m_simSpeed{ 1.0f };
 
-	float m_skipTimerGoal{ 1.0f };
+	float m_skipTimerGoal{ 5.0f };
 
 	Timer m_skipStepTimer{};
 
