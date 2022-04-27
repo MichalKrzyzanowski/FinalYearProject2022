@@ -82,13 +82,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(BOX2D_SDK)/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK)/include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(SDL_SDK)/lib/x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>../box2d-custom/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK)/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;../box2d-custom/build/bin/Debug;$(SDL_SDK)/lib/x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(BOX2D_SDK)/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK)/include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;$(BOX2D_SDK)/build/bin/Debug;$(SDL_SDK)/lib/x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>../box2d-custom/include/box2d;$(SDL_IMG)/include;$(SDL_TTF)/include;$(SDL_SDK)/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SDL_IMG)/lib/x64;$(SDL_TTF)/lib/x64;../box2d-custom/build/bin/Debug;$(SDL_SDK)/lib/x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -132,7 +132,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;../box2d-custom/bin/Debug/box2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,7 +151,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;../box2d-custom/bin/Release/box2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
