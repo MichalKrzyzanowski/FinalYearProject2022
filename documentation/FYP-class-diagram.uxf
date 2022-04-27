@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.3.0">
+  <zoom_level>7</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1085</x>
+      <y>42</y>
+      <w>189</w>
+      <h>133</h>
+    </coordinates>
+    <panel_attributes>Button
+
+--
+-button : SDL_FRect
+-title : string
+
+--
++Button(pos : vector2f,
+title : string) : &lt;&lt;constructor&gt;&gt;
++render(renderer : SDL_Renderer*) : void
++ width() : float
++ height() : float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1197</x>
+      <y>231</y>
+      <w>147</w>
+      <h>133</h>
+    </coordinates>
+    <panel_attributes>Timer
+
+--
+-startTicks : Uint32
+
+--
++Timer() : &lt;&lt;constructor&gt;&gt;
++start() : void
++restart() : void
++getTicks() : Uint32
++getTicksAsSeconds() : float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1057</x>
+      <y>931</y>
+      <w>196</w>
+      <h>84</h>
+    </coordinates>
+    <panel_attributes>ConvexShapeContactListener
+
+--
+
+--
++BeginContact(contact : b2Contact*) : void
++PostSolve(contact : b2Contact*,
+impulse : b2ContactImpulse*) : void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1022</x>
+      <y>784</y>
+      <w>147</w>
+      <h>133</h>
+    </coordinates>
+    <panel_attributes>LevelList
+
+--
+_-levels: vector&lt;string&gt;_
+
+--
+_+levels(): vector&lt;string&gt;_
+_+updateList(): void_</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>721</x>
+      <y>203</y>
+      <w>224</w>
+      <h>1155</h>
+    </coordinates>
+    <panel_attributes>Game
+
+--
+-gameIsRunning : bool
+-shootMode : bool
+-threads : vector&lt;SDL_Threads*&gt;
+-window : SDL_Window*
+-renderer : SDL_Renderer*
+-fontNormal : TTF_Font*
+-fontSmall : TTF_Font*
+-fontTiny : TTF_Font*
+-showWarning : bool
+-showHelp : bool
+-warningTimer : Timer
+-showLevelSave : bool
+-levelSaveTimer : Timer
+-phaseText : LTexture
+-powerText : LTexture
+-bulletCountText : LTexture
+-warningText : LTexture
+-levelSaveText : LTexture
+-rectangleText : LTexture
+-rectangleRotatedText : LTexture
+-squareText : LTexture
+-targetText : LTexture
+-playerText : LTexture
+-helpText : LTexture
+-fps : float
+-simSpeed : float
+-skipStepTimer : Timer
+-skipTimerGoal : float
+-gravity : b2Vec2
+-world : b2World
+-timeStep : float
+-velocityIterations : int32_t
+-positionIterations : int32_t
+-groundShape : ConvexShape
+-leftWallShape : ConvexShape
+-rightWallShape : ConvexShape
+-roofShape : ConvexShape
+-gameState : GameState
+-editorState : EditorState
+-keystate : Uint8*
+-power : float
+-powerGain : float
+-maxPower : float
+-minPower : float
+-totalBullets : int
+-bulletsCount : int
+-aimTargetPoint : SDL_FPoint
+-playSim : bool
+-targetCount : int
+-mouseX : int
+-mouseY : int
+-shapeSpawner : vector&lt;ConvexShape&gt;
+-shapeData : vector&lt;ShapeData&gt;
+currentBullet : ConvexShape*
+-rectanglePrefab : ConvexShape
+-rectangleRotatedPrefab : ConvexShape
+-squarePrefab : ConvexShape
+-targetPrefab : ConvexShape
+-playerPrefab : ConvexShape
+-currentShape : ConvexShape*
+-player : ConvexShape*
+-playerPresent : bool
+-contactListener : ConvexShapeContactListener
+-sdlDraw : SDLDraw
+-toolbarBg : SDL_FRect
+-squareButton : Button
+-rectButton : Button
+-rectRotatedButton : Button
+-targetButton : Button
+-playerButton : Button
+-selectedButton : Button*
+-rectangleShapeSelect : SDL_FRect
+-rectangleRotatedShapeSelect : SDL_FRect
+-squareShapeSelect : SDL_FRect
+-targetShapeSelect : SDL_FRect
+-playerShapeSelect : SDL_FRect
+-saveDialogBox : SDL_FRect
+-levelNameString : string
+-levelNameText : LTexture
+-levelDialogBox : SDL_FRect
+-loadLevelNameText : LTexture
+-loadLevelListY : float
+-scrollIncrement : float
+
+
+--
++Game() : &lt;&lt;constructor&gt;&gt;
++~Game() : &lt;&lt;destructor&gt;&gt;
++run() : void
+-processEvents(e : SDL_Event) : void
+-processMouseEvents(e : SDL_Event) : void
+-update() : void
+-render() : void
+-renderLevelSelect() : void
+-saveLevelData(fileName : string) : void
+-loadLevelData(fileName : string) : void
+-storeShapeData(shapeData : ShapeData) : void
+-reset() : void
+-clear() : void
+-cleanUp() : void
+-shoot(targetPosition : Vector2f) : void
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1141</x>
+      <y>462</y>
+      <w>217</w>
+      <h>308</h>
+    </coordinates>
+    <panel_attributes>SDLDraw
+
+--
+-renderer: SDL_Renderer
+
+--
++setRenderer(renderer : SDL_Renderer*) : void
++DrawPolygon(vertices : b2Vec2*,
+    vertexCount : int32,
+    color : b2Color) : void
++DrawSolidPolygon(vertices : b2Vec2*,
+    vertexCount : int32,
+    color : b2Color,
+    fixture : b2Fixture*) : void
++DrawCircle(center : b2Vec2,
+    radius : float,
+    color : b2Color) : void
++DrawSolidCircle(center : b2Vec2,
+    radius : float,
+    axis : b2Vec2,
+    color : b2Color) : void
++DrawSegment(p1 : b2Vec2,
+    p2 : b2Vec2,
+    color : b2Color) : void
++DrawTransform(xf : b2Transform) : void
++DrawPoint(p : b2Vec2,
+    size : float,
+    color : b2Color) : void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>189</x>
+      <y>168</y>
+      <w>196</w>
+      <h>490</h>
+    </coordinates>
+    <panel_attributes>ConvexShape
+
+--
+-points : vector&lt;b2Vec2&gt;
+-center : vector2f
+-marked : bool
+-active : bool
+-world : b2World*
+-b2BodyDef : b2BodyDef
+-b2Body : b2Body*
+-b2Shape : b2PolygonShape
+-b2FixtureDef : b2FixtureDef
+
+--
++ConvexShape(world : b2World*,
+topLeftPosition : vector2f,
+width : float,
+height : float,
+b2Type : b2BodyType,
+type : Type,
+color : SDL_Color,
+angle : float
+id : int
+marked : bool) : &lt;&lt;constructor&gt;&gt;
++~ConvexShape() : &lt;&lt;destructor&gt;&gt;
++renderShadow(renderer : SDL_Renderer*,
+position : vector2f) : void
++renderLines(renderer : SDL_Renderer*,
+points : vector&lt;SDL_FPoints&gt;*) : void
++launch(direction : b2Vec2,
+power : float) : void
++width() : int
++height() : int
++b2BodyDefType() : b2BodyType
++b2Body() : b2Body*
++position() : b2Vec2
++staticPosition() : vector2f
++angle() : float
++type() : Type&amp;
++color() : SDL_Color&amp;
++data() : ShapeData
++marked() : bool&amp;
++awake() : bool
++active() : bool&amp;</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>21</x>
+      <y>259</y>
+      <w>112</w>
+      <h>105</h>
+    </coordinates>
+    <panel_attributes>**&lt;&lt;enumeration&gt;&gt;**
+Type
+
+--
+BLOCK
+WALL
+PLAYER
+TARGET
+BULLET
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>455</x>
+      <y>0</y>
+      <w>133</w>
+      <h>161</h>
+    </coordinates>
+    <panel_attributes>**&lt;&lt;struct&gt;&gt;**
+ShapeData
+
+--
+color : SDL_Color
+position : Vector2f
+type : Type
+b2BodyType : b2BodyType
+width : int
+height : int
+angle : float
+id : int
+marked : bool
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>189</x>
+      <y>742</y>
+      <w>133</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>**&lt;&lt;struct&gt;&gt;**
+Vector2f
+
+--
+x : float
+y : float
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>483</x>
+      <y>784</y>
+      <w>133</w>
+      <h>84</h>
+    </coordinates>
+    <panel_attributes>**&lt;&lt;struct&gt;&gt;**
+LTexture
+
+--
+texture : SDL_Texture*
+width : int
+height : int
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1057</x>
+      <y>1169</y>
+      <w>112</w>
+      <h>105</h>
+    </coordinates>
+    <panel_attributes>**&lt;&lt;enumeration&gt;&gt;**
+GameState
+
+--
+EDIT
+GAMEPLAY
+WIN
+LOSE
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1099</x>
+      <y>1029</y>
+      <w>112</w>
+      <h>105</h>
+    </coordinates>
+    <panel_attributes>**&lt;&lt;enumeration&gt;&gt;**
+EditorState
+
+--
+PLACE
+ENTERTEXT
+LOADLEVEL
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>938</x>
+      <y>98</y>
+      <w>161</w>
+      <h>224</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;300.0;210.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>378</x>
+      <y>378</y>
+      <w>357</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>490.0;70.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>938</x>
+      <y>294</y>
+      <w>273</w>
+      <h>168</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;220.0;370.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>938</x>
+      <y>602</y>
+      <w>217</w>
+      <h>28</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;20.0;290.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>938</x>
+      <y>959</y>
+      <w>133</w>
+      <h>28</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;170.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>938</x>
+      <y>847</y>
+      <w>98</w>
+      <h>35</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;30.0;120.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>126</x>
+      <y>315</y>
+      <w>77</w>
+      <h>21</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>90.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>938</x>
+      <y>1085</y>
+      <w>175</w>
+      <h>21</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;230.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>938</x>
+      <y>1183</y>
+      <w>133</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;170.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>280</x>
+      <y>42</y>
+      <w>189</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;180.0;250.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>609</x>
+      <y>784</y>
+      <w>126</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>160.0;10.0;10.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>217</x>
+      <y>651</y>
+      <w>49</w>
+      <h>105</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>50.0;10.0;10.0;130.0</additional_attributes>
+  </element>
+</diagram>
