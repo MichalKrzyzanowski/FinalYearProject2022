@@ -359,7 +359,7 @@ void Game::estimateDifficulty()
 	m_power = m_MIN_POWER;
 
 	int powerStep{ 1 };
-	int angleIncrement{ 20 };
+	int angleIncrement{ 10 };
 	int scoredShotCount{};
 
 	std::vector<int> m_scores{};
@@ -396,6 +396,8 @@ void Game::estimateDifficulty()
 			break;
 		}
 		
+		bool targetHit{ false };
+
 		reset();
 
 		for (int i{}; i < m_shapeSpawner.size(); ++i)
@@ -427,7 +429,7 @@ void Game::estimateDifficulty()
 		// loop through each power level
 		for (; m_power < m_MAX_POWER; m_power += ((m_MAX_POWER - m_MIN_POWER) / 2))
 		{
-			if (m_allTargetsHit)
+			if (m_allTargetsHit || targetHit)
 			{
 				break;
 			}
@@ -450,7 +452,7 @@ void Game::estimateDifficulty()
 			// loop through a 360 degree circle
 			for (int j{}; j < 360; j += angleIncrement)
 			{
-				if (m_allTargetsHit)
+				if (m_allTargetsHit || targetHit)
 				{
 					break;
 				}
@@ -579,6 +581,7 @@ void Game::estimateDifficulty()
 												if (!targetHitTracker.at(k).second)
 												{
 													currentScore += 100;
+													targetHit = true;
 													targetsHit++;
 													break;
 												}
@@ -761,7 +764,7 @@ int Game::evaluateDifficulty(int bestScore)
 	{
 		return 9;
 	}
-	else if (bestScore > 100.0f)
+	else if (bestScore > 80.0f)
 	{
 		return 10;
 	}
