@@ -18,10 +18,10 @@ Once you have the build, copy over the following directories from any of the pro
 - results
 - assets (needs LemonMilk.otf TTF)
 
+Once that's finished, your build should be good to go. Also, a Debug build works best right now!
+
 # Controls
 **Mouse:** Navigation
-
-Once that's finished, your build should be good to go. Also, a Debug build works best right now!
 
 **Left Mouse Button:** Selecting & placing shapes. interacting with UI elements such as level selection list
 
