@@ -13,9 +13,15 @@ If, for some reason, you want to create a build of the project, here is what you
 
 Make sure to setup the enviroment variables correctly & use the x64 lib files.
 Once you have the libraries setup, you can open up the SDLBox2DStuff sln file using vs2019 or later and build the solution.
+Once you have the build, copy over the following directories from any of the project directories or create them into your build directory:
+- levels
+- results
+- assets (needs LemonMilk.otf TTF)
 
 # Controls
 **Mouse:** Navigation
+
+Once that's finished, your build should be good to go. Also, a Debug build works best right now!
 
 **Left Mouse Button:** Selecting & placing shapes. interacting with UI elements such as level selection list
 
