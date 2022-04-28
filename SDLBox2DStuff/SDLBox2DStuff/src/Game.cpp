@@ -2,6 +2,9 @@
 
 int runEstimation(void* data);
 
+/// <summary>
+/// Setup the Box2D simulation and SDL2 window, renderer, fonts, etc.
+/// </summary>
 Game::Game() :
 	m_gameIsRunning{ false },
 	m_groundShape{ &m_world, Vector2f{-1, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH + 2, 100, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
@@ -73,12 +76,18 @@ Game::Game() :
 	LevelList::updateList();
 }
 
+/// <summary>
+/// destructor, cleans up SDL2 variables
+/// </summary>
 Game::~Game()
 {
 	printf("~Game()\n");
 	cleanUp();
 }
 
+/// <summary>
+/// main game loop for SDL2
+/// </summary>
 void Game::run()
 {
 	m_gameIsRunning = true;
@@ -106,6 +115,10 @@ void Game::run()
 	}
 }
 
+/// <summary>
+/// main event handling loop, handles most of the key inputs
+/// </summary>
+/// <param name="e">sdl event</param>
 void Game::processEvents(SDL_Event e)
 {
 	// simple event loop
@@ -247,6 +260,7 @@ void Game::processEvents(SDL_Event e)
 				}
 				else if (e.type == SDL_TEXTINPUT)
 				{
+					// text input implementation. get any key as long as it is not a special character used for cut & paste, etc.
 					if (!(SDL_GetModState() & KMOD_CTRL &&
 						(e.text.text[0] == 'c' || e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V'))
 						&& m_levelNameString.length() <= 10)
@@ -293,6 +307,10 @@ void Game::processEvents(SDL_Event e)
 	}
 }
 
+/// <summary>
+/// mouse event handling loop, handles selecting shapes & placing selected shapes into the game world
+/// </summary>
+/// <param name="e">sdl event</param>
 void Game::processMouseEvents(SDL_Event e)
 {
 	Uint32 buttons = SDL_GetMouseState(&mouseX, &mouseY);
@@ -306,6 +324,7 @@ void Game::processMouseEvents(SDL_Event e)
 		// if the left mouse button is pressed down
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
 		{
+			// place player shape if a player shape is not present
 			if (m_currentShape->type() == Type::PLAYER && !m_playerPresent)
 			{
 				m_shapeSpawner.emplace_back(&m_world,
@@ -324,6 +343,7 @@ void Game::processMouseEvents(SDL_Event e)
 			}
 			else if (m_currentShape->type() != Type::PLAYER)
 			{
+				// place target shape if there are less than 3 targets
 				if (m_currentShape->type() == Type::TARGET && m_targetCount < 3)
 				{
 					m_shapeSpawner.emplace_back(&m_world,
@@ -338,6 +358,7 @@ void Game::processMouseEvents(SDL_Event e)
 					++m_targetCount;
 				}
 
+				// place any other shape
 				if (m_currentShape->type() == Type::BLOCK)
 				{
 					m_shapeSpawner.emplace_back(&m_world,
@@ -353,6 +374,7 @@ void Game::processMouseEvents(SDL_Event e)
 			}
 		}
 	}
+	// allows you to select shapes only in edit mode
 	else if (m_gameState == GameState::EDIT && mouseY > m_toolbarBg.y)
 	{
 		if ((mouseX >= m_squareButton.position().x && mouseX <= m_squareButton.position().x + m_squareButton.width()) &&
@@ -407,6 +429,7 @@ void Game::processMouseEvents(SDL_Event e)
 		}
 	}
 
+	// level selecting in load level mode
 	if (m_editorState == EditorState::LOADLEVEL)
 	{
 		int row{}, col{};
@@ -446,6 +469,7 @@ void Game::processMouseEvents(SDL_Event e)
 		}
 	}
 
+	// shooting bullets in gameplay mode
 	if (m_gameState == GameState::GAMEPLAY && m_player && m_shootMode && m_bulletsCount > 0)
 	{
 		if (e.type == SDL_MOUSEBUTTONDOWN && ((buttons & SDL_BUTTON_LMASK) != 0))
@@ -464,6 +488,10 @@ void Game::processMouseEvents(SDL_Event e)
 	}
 }
 
+/// <summary>
+/// main game update loop, updates the Box2D physics simulation & checks for gameplay victory/loss.
+/// allows the player to increase/decrease shot power level
+/// </summary>
 void Game::update()
 {
 	if (m_gameState == GameState::GAMEPLAY)
@@ -601,18 +629,11 @@ void Game::update()
 	}
 }
 
+/// <summary>
+/// main SDL2 render method, all of the shapes are rendered using SDLDraw class but the UI is still rendered here
+/// </summary>
 void Game::render()
 {
-	//SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-	//SDL_RenderClear(m_renderer);
-
-	/*for (ConvexShape& shape : m_shapeSpawner)
-	{
-		shape.render(m_renderer);
-	}
-	m_groundConvexShape.render(m_renderer);*/
-
-
 	SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderClear(m_renderer);
 
@@ -712,6 +733,9 @@ void Game::render()
 	SDL_RenderPresent(m_renderer);
 }
 
+/// <summary>
+/// render the level select list
+/// </summary>
 void Game::renderLevelSelect()
 {
 	int row{}, col{};
@@ -739,6 +763,10 @@ void Game::renderLevelSelect()
 	}
 }
 
+/// <summary>
+/// saves the shape data from current level into a file
+/// </summary>
+/// <param name="fileName">name of level file</param>
 void Game::saveLevelData(const std::string& fileName)
 {
 	printf("Saving level data to file\n");
@@ -765,6 +793,10 @@ void Game::saveLevelData(const std::string& fileName)
 	levelData.close();
 }
 
+/// <summary>
+/// loads a level from a file
+/// </summary>
+/// <param name="fileName">name of level file</param>
 void Game::loadLevelData(const std::string& fileName)
 {
 	printf("Loading level data from file\n");
@@ -834,11 +866,18 @@ void Game::loadLevelData(const std::string& fileName)
 	reset();
 }
 
+/// <summary>
+/// store the current shape data into a vector of shape data
+/// </summary>
+/// <param name="shapeData">current shape data</param>
 void Game::storeShapeData(ShapeData shapeData)
 {
 	m_shapeData.push_back(shapeData);
 }
 
+/// <summary>
+/// reset the current levels shapes by reloading previously saved shape data
+/// </summary>
 void Game::reset()
 {
 	m_bulletsCount = m_TOTAL_BULLETS;
@@ -878,6 +917,9 @@ void Game::reset()
 	}
 }
 
+/// <summary>
+/// clear the level
+/// </summary>
 void Game::clear()
 {
 	m_shapeSpawner.clear();
@@ -887,6 +929,11 @@ void Game::clear()
 	m_shapeData.clear();
 }
 
+/// <summary>
+/// SDL2 thread function that runs a command to open the difficulty estimation program
+/// </summary>
+/// <param name="data"></param>
+/// <returns></returns>
 int runEstimation(void* data)
 {
 	system("DifficultyEstimation.exe sim-level");
@@ -895,6 +942,9 @@ int runEstimation(void* data)
 	return 0;
 }
 
+/// <summary>
+/// clean up of all SDL2 variables for destruction of the Game class
+/// </summary>
 void Game::cleanUp()
 {
 	SDL_DestroyTexture(m_phaseText.texture);
@@ -932,6 +982,10 @@ void Game::cleanUp()
 	SDL_Quit();
 }
 
+/// <summary>
+/// shoots a bullet type shape in a given direction
+/// </summary>
+/// <param name="targetPosition">position to shoot bullet at</param>
 void Game::shoot(Vector2f targetPosition)
 {
 	b2Vec2 unit{ targetPosition.x - m_player->position().x * SCALING_FACTOR, targetPosition.y - m_player->position().y * SCALING_FACTOR };

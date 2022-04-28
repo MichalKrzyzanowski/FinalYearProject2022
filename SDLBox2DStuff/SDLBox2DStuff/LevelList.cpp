@@ -3,6 +3,9 @@
 // init static members
 std::vector<std::string> LevelList::m_levels{};
 
+/// <summary>
+/// gets the levels from the levels directory and updates the levels vector
+/// </summary>
 void LevelList::updateList()
 {
 	std::string directoryPath{ "levels//" };

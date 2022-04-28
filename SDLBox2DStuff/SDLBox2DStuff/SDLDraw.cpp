@@ -4,6 +4,13 @@ void SDLDraw::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Col
 {
 }
 
+/// <summary>
+/// renders a solid polygon with SDL2 using shape data provided by the b2Draw Box2D API
+/// </summary>
+/// <param name="vertices">shape vertices</param>
+/// <param name="vertexCount">shape vertex amount</param>
+/// <param name="color">shape outline color</param>
+/// <param name="fixture">shape fixture ref</param>
 void SDLDraw::DrawSolidPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color, b2Fixture* fixture)
 {
 	ConvexShape* data = reinterpret_cast<ConvexShape*>(fixture->GetBody()->GetUserData().pointer);

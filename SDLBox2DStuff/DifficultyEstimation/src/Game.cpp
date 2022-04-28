@@ -1,5 +1,8 @@
 #include "../include/Game.h"
 
+/// <summary>
+/// Setup the Box2D simulation and SDL2 window, renderer, fonts, etc.
+/// </summary>
 Game::Game(int mainArgsCount, char** mainArgs) :
 	m_gameIsRunning{ true },
 	m_groundShape{ &m_world, Vector2f{-1, SCREEN_HEIGHT - 70.0f}, SCREEN_WIDTH + 2, 100, b2_staticBody, Type::WALL, SDL_Color{220, 220, 220, 0xFF} },
@@ -11,8 +14,6 @@ Game::Game(int mainArgsCount, char** mainArgs) :
 	m_targetPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_dynamicBody, Type::TARGET, SDL_Color{ 240, 207, 46, 255 } },
 	m_playerPrefab{ &m_world, Vector2f{-100, 0}, 20, 20, b2_staticBody, Type::PLAYER, SDL_Color{ 0x24, 0x3C, 0xAE, 0xFF } }
 {
-	//ShowWindow(GetConsoleWindow(), SW_HIDE);
-
 	if (mainArgsCount > 1)
 	{
 		m_levelName = mainArgs[1];
@@ -84,12 +85,18 @@ Game::Game(int mainArgsCount, char** mainArgs) :
 	estimateDifficulty();
 }
 
+/// <summary>
+/// destructor, cleans up SDL2 variables
+/// </summary>
 Game::~Game()
 {
 	printf("~Game()\n");
 	cleanUp();
 }
 
+/// <summary>
+/// main game loop for SDL2
+/// </summary>
 void Game::run()
 {
 	SDL_Event e{};
@@ -116,6 +123,10 @@ void Game::run()
 	}
 }
 
+/// <summary>
+/// main event handling loop, handles most of the key inputs
+/// </summary>
+/// <param name="e">sdl event</param>
 void Game::processEvents(SDL_Event e)
 {
 	// simple event loop
@@ -134,6 +145,10 @@ void Game::processEvents(SDL_Event e)
 	}
 }
 
+/// <summary>
+/// main game update loop, updates the Box2D physics simulation & checks for gameplay victory/loss.
+/// allows the player to increase/decrease shot power level
+/// </summary>
 void Game::update()
 {
 	m_world.Step(m_timeStep * m_simSpeed, m_velocityIterations, m_positionIterations);
@@ -200,6 +215,9 @@ void Game::update()
 	}
 }
 
+/// <summary>
+/// main SDL2 render method, all of the shapes are rendered using SDLDraw class but the UI is still rendered here
+/// </summary>
 void Game::render()
 {
 	SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -224,6 +242,10 @@ void Game::render()
 	SDL_RenderPresent(m_renderer);
 }
 
+/// <summary>
+/// loads a level from a file
+/// </summary>
+/// <param name="fileName">name of level file</param>
 void Game::loadLevelData(const std::string& fileName)
 {
 	printf("Loading level data from file\n");
@@ -293,11 +315,18 @@ void Game::loadLevelData(const std::string& fileName)
 	reset();
 }
 
+/// <summary>
+/// store the current shape data into a vector of shape data
+/// </summary>
+/// <param name="shapeData">current shape data</param>
 void Game::storeShapeData(ShapeData shapeData)
 {
 	m_shapeData.push_back(shapeData);
 }
 
+/// <summary>
+/// reset the current levels shapes by reloading previously saved shape data
+/// </summary>
 void Game::reset()
 {
 	m_shapeSpawner.clear();
@@ -337,6 +366,10 @@ void Game::reset()
 	}
 }
 
+/// <summary>
+/// updates the data of the shapes, used when saving a level state during difficulty estimation
+/// </summary>
+/// <param name="dataVec"></param>
 void Game::updateShapeData(std::vector<ShapeData>& dataVec)
 {
 	for (int i{}; i < m_shapeSpawner.size(); ++i)
@@ -351,6 +384,10 @@ void Game::updateShapeData(std::vector<ShapeData>& dataVec)
 	}
 }
 
+/// <summary>
+/// difficulty estimation loop, used to estimate the difficulty of a level by looping through
+/// many power levels & angles for every bullet.
+/// </summary>
 void Game::estimateDifficulty()
 {
 	SDL_Event e{};
@@ -655,12 +692,19 @@ void Game::estimateDifficulty()
 	m_quitTimer.restart();
 }
 
+/// <summary>
+/// quit the program
+/// </summary>
 void Game::quit()
 {
-	ShowWindow(GetConsoleWindow(), SW_SHOW);
 	m_gameIsRunning = false;
 }
 
+/// <summary>
+/// calcuate the score to be awarded for a shot based on the distance from the shot to any of the bullets.
+/// the smaller the distance, the bigger the score reward
+/// </summary>
+/// <returns>shot score</returns>
 int Game::calculateDistanceScore()
 {
 	int score{};
@@ -726,6 +770,11 @@ int Game::distanceScoreEvaluation(int shortestDistance)
 	return 0;
 }
 
+/// <summary>
+/// calculates the level difficulty based on the amount of scored shots (> 15 score)
+/// </summary>
+/// <param name="bestScore">amount of scored shots</param>
+/// <returns>difficulty</returns>
 int Game::evaluateDifficulty(int bestScore)
 {
 	if (bestScore > 0.0f && bestScore <= 3.0f)
@@ -772,6 +821,10 @@ int Game::evaluateDifficulty(int bestScore)
 	return 0;
 }
 
+/// <summary>
+/// store result data into a file, to be used in setting up result graphs
+/// </summary>
+/// <param name="data">data string</param>
 void Game::storeResult(const char* data)
 {
 	std::ofstream results("results/results-draft.txt", std::ios::app);
@@ -781,6 +834,9 @@ void Game::storeResult(const char* data)
 	results.close();
 }
 
+/// <summary>
+/// empty out the results file
+/// </summary>
 void Game::clearResultsFile()
 {
 	std::ofstream results("results/results-draft.txt", std::ios::out | std::ios::trunc);
@@ -788,6 +844,9 @@ void Game::clearResultsFile()
 	results.close();
 }
 
+/// <summary>
+/// clean up of all SDL2 variables for destruction of the Game class
+/// </summary>
 void Game::cleanUp()
 {
 	SDL_DestroyTexture(m_phaseText.texture);
@@ -811,6 +870,10 @@ void Game::cleanUp()
 	SDL_Quit();
 }
 
+/// <summary>
+/// shoots a bullet type shape in a given direction
+/// </summary>
+/// <param name="targetPosition">position to shoot bullet at</param>
 void Game::shoot(Vector2f targetPosition)
 {
 	b2Vec2 unit{ targetPosition.x - m_player->position().x * SCALING_FACTOR, targetPosition.y - m_player->position().y * SCALING_FACTOR };

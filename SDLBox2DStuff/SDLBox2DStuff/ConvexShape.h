@@ -32,8 +32,6 @@ struct ShapeData
 class ConvexShape
 {
 private:
-	std::vector<b2Vec2> m_points; // for rendering
-
 	ShapeData m_data;
 
 	Vector2f m_center;

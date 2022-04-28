@@ -88,7 +88,6 @@ private:
 	LTexture m_warningText;
 	LTexture m_levelSaveText;
 
-
 	LTexture m_rectangleText;
 	LTexture m_rectangleRotatedText;
 	LTexture m_squareText;
@@ -113,6 +112,7 @@ private:
 	int32_t m_velocityIterations{ 2000 };
 	int32_t m_positionIterations{ 2000 };
 
+	// boundary shapes
 	ConvexShape m_groundShape;
 	ConvexShape m_leftWallShape;
 	ConvexShape m_rightWallShape;
@@ -133,22 +133,16 @@ private:
 	int m_bulletsCount{ m_TOTAL_BULLETS };
 
 	SDL_FPoint m_aimTargetPoint{};
-	/*float m_shotAngle;
-	Vector2f m_shotDirection{ 0.0f, 0.0f };*/
 
 	bool m_playSim{ false };
 	int m_targetCount{ 0 };
 
-	// messing around with box2d
 	int mouseX, mouseY;
-	//bool m_sprayTime{ false };
-	//Timer m_timer{};
-	//float m_sprayCooldown{ 0.05f };
 	std::vector<ConvexShape> m_shapeSpawner{};
 	std::vector<ShapeData> m_shapeData{};
 	ConvexShape* m_currentBullet{ nullptr };
 
-
+	// prefabs
 	ConvexShape m_rectanglePrefab;
 	ConvexShape m_rectangleRotatedPrefab;
 	ConvexShape m_squarePrefab;
