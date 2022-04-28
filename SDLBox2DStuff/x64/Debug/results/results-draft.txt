@@ -1,8 +1,0 @@
-5pts, shot: 1
-
-15pts, shot: 2
-
-25pts, shot: 3
-
-200pts, shot: 4
-

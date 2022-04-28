@@ -10,7 +10,7 @@
 class SDLDraw : public b2Draw
 {
 private:
-	SDL_Renderer* m_renderer;
+	SDL_Renderer* m_renderer{};
 
 public:
 	void setRenderer(SDL_Renderer* renderer) { m_renderer = renderer; }
